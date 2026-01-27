@@ -30,8 +30,13 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { useCartStore } from '@/lib/store/cart';
-import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types';
+
+function isDemoMode(): boolean {
+  return !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+         process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co' ||
+         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+}
 
 export default function Header() {
   const router = useRouter();
@@ -45,17 +50,24 @@ export default function Header() {
 
   useEffect(() => {
     setMounted(true);
-    const supabase = createClient();
 
-    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
-      if (authUser) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .single();
-        setUser(profile);
-      }
+    // Skip auth in demo mode
+    if (isDemoMode()) {
+      return;
+    }
+
+    import('@/lib/supabase/client').then(({ createClient }) => {
+      const supabase = createClient();
+      supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+        if (authUser) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+          setUser(profile);
+        }
+      });
     });
   }, []);
 
@@ -72,8 +84,11 @@ export default function Header() {
   };
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    if (!isDemoMode()) {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    }
     setUser(null);
     handleMenuClose();
     router.refresh();
