@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next Store
+
+An open-source e-commerce platform built with Next.js 14+, Material UI, Supabase, and Stripe.
+
+## Features
+
+- **Storefront**: Full-featured e-commerce frontend with product catalog, search, filters
+- **Shopping Cart**: Persistent cart with localStorage and sync for logged-in users
+- **Checkout**: Multi-step checkout with address management
+- **Payments**: Stripe, PayPal, and Cash on Delivery (COD)
+- **Digital Products**: Secure download links with expiration and download limits
+- **User Accounts**: Registration, login, password reset, order history
+- **Admin Dashboard**: Complete CRUD for products, orders, customers, shipping
+- **Authentication**: Supabase Auth with role-based access (customer/admin)
+- **Security**: Row Level Security (RLS) on all database tables
+
+## Tech Stack
+
+- **Framework**: Next.js 14+ (App Router)
+- **UI**: Material UI v5
+- **Database**: Supabase (PostgreSQL)
+- **Auth**: Supabase Auth
+- **Payments**: Stripe + PayPal
+- **State Management**: Zustand
+- **Language**: TypeScript
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- npm or yarn
+- Supabase account
+- Stripe account
+- PayPal developer account (optional)
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/next-store.git
+cd next-store
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Set up Supabase
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to SQL Editor and run the migration file from `supabase/migrations/001_initial_schema.sql`
+3. (Optional) Run `supabase/seed.sql` to add sample products
+4. Copy your project URL and keys from Settings > API
+
+### 4. Set up environment variables
+
+Copy `.env.example` to `.env.local` and fill in your values:
+
+```bash
+cp .env.example .env.local
+```
+
+### 5. Create an admin user
+
+1. Register a new user through the app at `/register`
+2. In Supabase Dashboard, go to Table Editor > profiles
+3. Find your user and change `role` from `customer` to `admin`
+
+### 6. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the storefront.
+Open [http://localhost:3000/admin](http://localhost:3000/admin) to access the admin dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Vercel
 
-## Learn More
+1. Push your code to GitHub
+2. Import the repository in Vercel
+3. Add all environment variables
+4. Deploy
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT License
