@@ -29,7 +29,7 @@ import { mockShippingMethods } from '@/lib/mock-data';
 import type { ShippingMethod, CheckoutFormData, AddressFormData } from '@/types';
 
 function isDemoMode(): boolean {
-  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\\n/g, '').replace(/\n/g, '');
   return !url ||
          url === 'https://placeholder.supabase.co' ||
          url.includes('placeholder');

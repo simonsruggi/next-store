@@ -296,7 +296,10 @@ export const mockShippingMethods: ShippingMethod[] = [
 
 // Helper to check if we're in demo mode (no Supabase configured)
 export function isDemoMode(): boolean {
-  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '')
+    .trim()
+    .replace(/\\n/g, '')  // Handle literal \n
+    .replace(/\n/g, '');   // Handle actual newlines
   return !url ||
          url === 'https://placeholder.supabase.co' ||
          url.includes('placeholder');

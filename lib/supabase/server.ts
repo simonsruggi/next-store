@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 function isDemoMode(): boolean {
-  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\\n/g, '').replace(/\n/g, '');
   return !url ||
          url === 'https://placeholder.supabase.co' ||
          url.includes('placeholder');
