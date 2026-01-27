@@ -85,15 +85,15 @@ export default async function HomePage() {
                 Scopri i nostri prodotti di qualità. Spedizione gratuita per
                 ordini superiori a 50€.
               </Typography>
-              <Button
-                component={Link}
-                href="/products"
-                variant="contained"
-                color="secondary"
-                size="large"
-              >
-                Scopri i Prodotti
-              </Button>
+              <Link href="/products">
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                >
+                  Scopri i Prodotti
+                </Button>
+              </Link>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Box
@@ -133,14 +133,13 @@ export default async function HomePage() {
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             {categories.map((category) => (
-              <Chip
-                key={category.id}
-                label={category.name}
-                component={Link}
-                href={`/products?category=${category.slug}`}
-                clickable
-                sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
-              />
+              <Link key={category.id} href={`/products?category=${category.slug}`}>
+                <Chip
+                  label={category.name}
+                  clickable
+                  sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
+                />
+              </Link>
             ))}
           </Box>
         </Container>
@@ -159,9 +158,11 @@ export default async function HomePage() {
           <Typography variant="h4" component="h2">
             Prodotti in Evidenza
           </Typography>
-          <Button component={Link} href="/products" color="primary">
-            Vedi tutti
-          </Button>
+          <Link href="/products">
+            <Button color="primary">
+              Vedi tutti
+            </Button>
+          </Link>
         </Box>
 
         <Grid container spacing={3}>
@@ -177,48 +178,49 @@ export default async function HomePage() {
                   },
                 }}
               >
-                <CardMedia
-                  component={Link}
-                  href={`/product/${product.slug}`}
-                  sx={{
-                    height: 200,
-                    bgcolor: 'grey.100',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {product.images && product.images[0] ? (
-                    <Box
-                      component="img"
-                      src={product.images[0].url}
-                      alt={product.name}
-                      sx={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  ) : (
-                    <Typography variant="h2" color="text.secondary">
-                      📦
-                    </Typography>
-                  )}
-                </CardMedia>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography
-                    variant="h6"
-                    component={Link}
-                    href={`/product/${product.slug}`}
+                <Link href={`/product/${product.slug}`} style={{ textDecoration: 'none' }}>
+                  <CardMedia
                     sx={{
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      '&:hover': { color: 'primary.main' },
+                      height: 200,
+                      bgcolor: 'grey.100',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
                     }}
                   >
-                    {product.name}
-                  </Typography>
+                    {product.images && product.images[0] ? (
+                      <Box
+                        component="img"
+                        src={product.images[0].url}
+                        alt={product.name}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <Typography variant="h2" color="text.secondary">
+                        📦
+                      </Typography>
+                    )}
+                  </CardMedia>
+                </Link>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Link
+                    href={`/product/${product.slug}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        '&:hover': { color: 'primary.main' },
+                      }}
+                    >
+                      {product.name}
+                    </Typography>
+                  </Link>
                   <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
                       variant="h6"
