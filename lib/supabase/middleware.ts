@@ -1,10 +1,33 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+function isDemoMode(): boolean {
+  return !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+         process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co' ||
+         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // In demo mode, skip all auth checks
+  if (isDemoMode()) {
+    // Block admin routes in demo mode
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/';
+      return NextResponse.redirect(url);
+    }
+    // Block account routes in demo mode
+    if (request.nextUrl.pathname.startsWith('/account')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
