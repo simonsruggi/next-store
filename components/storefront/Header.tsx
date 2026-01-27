@@ -224,7 +224,7 @@ export default function Header() {
                     {user.role === 'admin' && (
                       <MenuItem
                         component={Link}
-                        href="/admin"
+                        href="/dashboard"
                         onClick={handleMenuClose}
                       >
                         Dashboard Admin

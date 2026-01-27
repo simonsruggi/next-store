@@ -38,7 +38,7 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <main className="p-6">
-        <Link href="/admin/orders" className="text-sm text-blue-600 hover:underline mb-4 inline-block">
+        <Link href="/dashboard/orders" className="text-sm text-blue-600 hover:underline mb-4 inline-block">
           &larr; Back to Orders
         </Link>
         <p className="text-gray-500">Order not found</p>
@@ -51,7 +51,7 @@ export default function OrderDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <Link href="/admin/orders" className="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">
+          <Link href="/dashboard/orders" className="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">
             &larr; Back to Orders
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">{order.order_number}</h1>

@@ -45,7 +45,7 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <h2 className="font-medium text-gray-900">Recent Orders</h2>
-          <Link href="/admin/orders" className="text-sm text-blue-600 hover:text-blue-700">
+          <Link href="/dashboard/orders" className="text-sm text-blue-600 hover:text-blue-700">
             View all
           </Link>
         </div>
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
                 recentOrders.map((order) => (
                   <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <Link href={`/admin/orders/${order.id}`} className="text-blue-600 hover:underline">
+                      <Link href={`/dashboard/orders/${order.id}`} className="text-blue-600 hover:underline">
                         {order.order_number}
                       </Link>
                     </td>
@@ -99,28 +99,28 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
-          href="/admin/products/new"
+          href="/dashboard/products/new"
           className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <p className="text-sm font-medium text-gray-900">Add Product</p>
           <p className="text-xs text-gray-500 mt-1">Create a new product</p>
         </Link>
         <Link
-          href="/admin/orders"
+          href="/dashboard/orders"
           className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <p className="text-sm font-medium text-gray-900">View Orders</p>
           <p className="text-xs text-gray-500 mt-1">Manage customer orders</p>
         </Link>
         <Link
-          href="/admin/shipping"
+          href="/dashboard/shipping"
           className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <p className="text-sm font-medium text-gray-900">Shipping</p>
           <p className="text-xs text-gray-500 mt-1">Configure shipping methods</p>
         </Link>
         <Link
-          href="/admin/settings"
+          href="/dashboard/settings"
           className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <p className="text-sm font-medium text-gray-900">Settings</p>

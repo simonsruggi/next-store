@@ -74,7 +74,7 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link
-                      href={`/admin/orders/${order.id}`}
+                      href={`/dashboard/orders/${order.id}`}
                       className="text-sm text-blue-600 hover:underline"
                     >
                       View

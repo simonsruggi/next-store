@@ -62,7 +62,7 @@ export default function NewProductPage() {
       images: [],
     });
 
-    router.push('/admin/products');
+    router.push('/dashboard/products');
   };
 
   const isValid = form.name && form.price;
@@ -78,7 +78,7 @@ export default function NewProductPage() {
   return (
     <main className="p-6">
       <div className="mb-6">
-        <Link href="/admin/products" className="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">
+        <Link href="/dashboard/products" className="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">
           &larr; Back to Products
         </Link>
         <h1 className="text-2xl font-semibold text-gray-900">New Product</h1>

@@ -138,7 +138,7 @@ function CheckoutSuccessContent() {
           Continue Shopping
         </Link>
         <Link
-          href="/admin/orders"
+          href="/dashboard/orders"
           className="flex-1 py-3 text-center border border-gray-200 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-50"
         >
           View in Admin

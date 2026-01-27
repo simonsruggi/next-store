@@ -156,7 +156,7 @@ export default function HeaderMinimal() {
                   )}
                 </Link>
                 <Link
-                  href="/admin"
+                  href="/dashboard"
                   onClick={() => setMenuOpen(false)}
                   className="block px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50"
                 >
