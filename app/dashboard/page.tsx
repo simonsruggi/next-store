@@ -23,7 +23,6 @@ export default function AdminDashboard() {
   if (!mounted) {
     return (
       <main className="p-6">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Dashboard</h1>
         <p className="text-gray-500">Loading...</p>
       </main>
     );
@@ -31,7 +30,6 @@ export default function AdminDashboard() {
 
   return (
     <main className="p-6">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Dashboard</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
