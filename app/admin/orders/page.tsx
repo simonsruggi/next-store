@@ -16,6 +16,7 @@ import {
 import { Visibility as ViewIcon } from '@mui/icons-material';
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice, formatDate } from '@/lib/utils';
+import type { Order } from '@/types';
 
 const statusColors: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error'> = {
   pending: 'warning',
@@ -96,7 +97,7 @@ export default async function AdminOrdersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
+                  orders.map((order: Order & { profile?: { full_name?: string; email?: string } }) => (
                     <TableRow key={order.id} hover>
                       <TableCell>
                         <Link href={`/admin/orders/${order.id}`}>

@@ -59,7 +59,7 @@ export default function Header() {
 
     import('@/lib/supabase/client').then(({ createClient }) => {
       const supabase = createClient();
-      supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      supabase.auth.getUser().then(async ({ data: { user: authUser } }: { data: { user: { id: string } | null } }) => {
         if (authUser) {
           const { data: profile } = await supabase
             .from('profiles')

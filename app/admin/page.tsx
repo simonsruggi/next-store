@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice, formatDate } from '@/lib/utils';
+import type { Order, PaymentStatus } from '@/types';
 
 async function getStats() {
   const supabase = await createClient();
@@ -32,8 +33,8 @@ async function getStats() {
     supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'customer'),
   ]);
 
-  const paidOrders = orders.data?.filter((o) => o.payment_status === 'paid') || [];
-  const totalRevenue = paidOrders.reduce((sum, o) => sum + o.total, 0);
+  const paidOrders = orders.data?.filter((o: { payment_status: PaymentStatus; total: number }) => o.payment_status === 'paid') || [];
+  const totalRevenue = paidOrders.reduce((sum: number, o: { total: number }) => sum + o.total, 0);
 
   return {
     totalRevenue,
@@ -152,7 +153,7 @@ export default async function AdminDashboard() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  recentOrders.map((order) => (
+                  recentOrders.map((order: Order) => (
                     <TableRow key={order.id} hover>
                       <TableCell>
                         <Link href={`/admin/orders/${order.id}`}>

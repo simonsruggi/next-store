@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice, formatDate, formatOrderNumber } from '@/lib/utils';
+import type { Order } from '@/types';
 
 const statusColors: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error'> = {
   pending: 'warning',
@@ -90,7 +91,7 @@ export default async function AccountOrdersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
+                  orders.map((order: Order & { items?: { count: number }[] }) => (
                     <TableRow key={order.id} hover>
                       <TableCell>
                         <Link href={`/account/orders/${order.id}`}>

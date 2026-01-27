@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
+import type { Profile } from '@/types';
 
 async function getCustomers() {
   const supabase = await createClient();
@@ -60,7 +61,7 @@ export default async function AdminCustomersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  customers.map((customer) => (
+                  customers.map((customer: Profile & { orders?: { count: number }[] }) => (
                     <TableRow key={customer.id} hover>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
