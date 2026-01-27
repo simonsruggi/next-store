@@ -9,8 +9,8 @@ import {
   Breadcrumbs,
   Divider,
 } from '@mui/material';
-import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils';
+import { isDemoMode, getMockProduct } from '@/lib/mock-data';
 import ProductImageGallery from '@/components/storefront/ProductImageGallery';
 import ProductVariantSelector from '@/components/storefront/ProductVariantSelector';
 import type { Product } from '@/types';
@@ -20,6 +20,11 @@ interface ProductPageProps {
 }
 
 async function getProduct(slug: string): Promise<Product | null> {
+  if (isDemoMode()) {
+    return getMockProduct(slug);
+  }
+
+  const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase
     .from('products')

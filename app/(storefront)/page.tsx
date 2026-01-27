@@ -11,12 +11,17 @@ import {
   CardActions,
   Chip,
 } from '@mui/material';
-import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils';
+import { isDemoMode, mockProducts, mockCategories, getMockFeaturedProducts } from '@/lib/mock-data';
 import AddToCartButton from '@/components/storefront/AddToCartButton';
-import type { Product } from '@/types';
+import type { Product, Category } from '@/types';
 
 async function getFeaturedProducts(): Promise<Product[]> {
+  if (isDemoMode()) {
+    return getMockFeaturedProducts();
+  }
+
+  const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase
     .from('products')
@@ -32,7 +37,12 @@ async function getFeaturedProducts(): Promise<Product[]> {
   return data || [];
 }
 
-async function getCategories() {
+async function getCategories(): Promise<Category[]> {
+  if (isDemoMode()) {
+    return mockCategories;
+  }
+
+  const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase
     .from('categories')
@@ -96,7 +106,6 @@ export default async function HomePage() {
                   },
                 }}
               >
-                {/* Placeholder for hero image */}
                 <Box
                   sx={{
                     width: 400,
@@ -108,7 +117,7 @@ export default async function HomePage() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Typography variant="h4">🛒</Typography>
+                  <Typography variant="h1">🛒</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -155,102 +164,95 @@ export default async function HomePage() {
           </Button>
         </Box>
 
-        {featuredProducts.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography color="text.secondary">
-              Nessun prodotto in evidenza al momento.
-            </Typography>
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {featuredProducts.map((product) => (
-              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                <Card
+        <Grid container spacing={3}>
+          {featuredProducts.map((product) => (
+            <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  '&:hover': {
+                    boxShadow: 4,
+                  },
+                }}
+              >
+                <CardMedia
+                  component={Link}
+                  href={`/product/${product.slug}`}
                   sx={{
-                    height: '100%',
+                    height: 200,
+                    bgcolor: 'grey.100',
                     display: 'flex',
-                    flexDirection: 'column',
-                    '&:hover': {
-                      boxShadow: 4,
-                    },
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  <CardMedia
+                  {product.images && product.images[0] ? (
+                    <Box
+                      component="img"
+                      src={product.images[0].url}
+                      alt={product.name}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <Typography variant="h2" color="text.secondary">
+                      📦
+                    </Typography>
+                  )}
+                </CardMedia>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography
+                    variant="h6"
                     component={Link}
                     href={`/product/${product.slug}`}
                     sx={{
-                      height: 200,
-                      bgcolor: 'grey.100',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      '&:hover': { color: 'primary.main' },
                     }}
                   >
-                    {product.images && product.images[0] ? (
-                      <Box
-                        component="img"
-                        src={product.images[0].url}
-                        alt={product.name}
-                        sx={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <Typography variant="h2" color="text.secondary">
-                        📦
-                      </Typography>
-                    )}
-                  </CardMedia>
-                  <CardContent sx={{ flexGrow: 1 }}>
+                    {product.name}
+                  </Typography>
+                  <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
                       variant="h6"
-                      component={Link}
-                      href={`/product/${product.slug}`}
-                      sx={{
-                        textDecoration: 'none',
-                        color: 'inherit',
-                        '&:hover': { color: 'primary.main' },
-                      }}
+                      color="primary"
+                      sx={{ fontWeight: 700 }}
                     >
-                      {product.name}
+                      {formatPrice(product.price)}
                     </Typography>
-                    <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {product.compare_at_price && (
                       <Typography
-                        variant="h6"
-                        color="primary"
-                        sx={{ fontWeight: 700 }}
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ textDecoration: 'line-through' }}
                       >
-                        {formatPrice(product.price)}
+                        {formatPrice(product.compare_at_price)}
                       </Typography>
-                      {product.compare_at_price && (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ textDecoration: 'line-through' }}
-                        >
-                          {formatPrice(product.compare_at_price)}
-                        </Typography>
-                      )}
-                    </Box>
-                    {product.type === 'digital' && (
-                      <Chip
-                        label="Digitale"
-                        size="small"
-                        color="info"
-                        sx={{ mt: 1 }}
-                      />
                     )}
-                  </CardContent>
-                  <CardActions sx={{ p: 2, pt: 0 }}>
-                    <AddToCartButton product={product} />
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        )}
+                  </Box>
+                  {product.type === 'digital' && (
+                    <Chip
+                      label="Digitale"
+                      size="small"
+                      color="info"
+                      sx={{ mt: 1 }}
+                    />
+                  )}
+                </CardContent>
+                <CardActions sx={{ p: 2, pt: 0 }}>
+                  <AddToCartButton product={product} />
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Container>
 
       {/* Features Section */}

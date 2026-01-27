@@ -24,9 +24,15 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useCartStore } from '@/lib/store/cart';
-import { createClient } from '@/lib/supabase/client';
 import { formatPrice, generateOrderNumber } from '@/lib/utils';
+import { mockShippingMethods } from '@/lib/mock-data';
 import type { ShippingMethod, CheckoutFormData, AddressFormData } from '@/types';
+
+function isDemoMode(): boolean {
+  return !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+         process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co' ||
+         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+}
 
 const steps = ['Spedizione', 'Pagamento', 'Conferma'];
 
@@ -67,6 +73,16 @@ export default function CheckoutPage() {
   }, []);
 
   const loadData = async () => {
+    // Demo mode: use mock shipping methods and skip auth
+    if (isDemoMode()) {
+      setShippingMethods(mockShippingMethods);
+      if (mockShippingMethods.length > 0) {
+        setFormData((prev) => ({ ...prev, shippingMethodId: mockShippingMethods[0].id }));
+      }
+      return;
+    }
+
+    const { createClient } = await import('@/lib/supabase/client');
     const supabase = createClient();
 
     // Get shipping methods
@@ -173,7 +189,19 @@ export default function CheckoutPage() {
     setLoading(true);
     setError(null);
 
+    // Demo mode: show a message instead of creating a real order
+    if (isDemoMode()) {
+      setTimeout(() => {
+        clearCart();
+        alert('Questa è una demo! In produzione, l\'ordine verrebbe creato e processato.');
+        router.push('/');
+        setLoading(false);
+      }, 1500);
+      return;
+    }
+
     try {
+      const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
       const orderNumber = generateOrderNumber();
 

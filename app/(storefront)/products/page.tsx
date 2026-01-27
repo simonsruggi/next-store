@@ -18,8 +18,8 @@ import {
   Breadcrumbs,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
-import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils';
+import { isDemoMode, mockProducts, mockCategories } from '@/lib/mock-data';
 import AddToCartButton from '@/components/storefront/AddToCartButton';
 import ProductFilters from '@/components/storefront/ProductFilters';
 import type { Product, Category } from '@/types';
@@ -41,6 +41,52 @@ async function getProducts(searchParams: {
   minPrice?: string;
   maxPrice?: string;
 }): Promise<Product[]> {
+  if (isDemoMode()) {
+    let products = [...mockProducts];
+
+    // Filter by category
+    if (searchParams.category) {
+      const category = mockCategories.find(c => c.slug === searchParams.category);
+      if (category) {
+        products = products.filter(p => p.category_id === category.id);
+      }
+    }
+
+    // Filter by search
+    if (searchParams.search) {
+      const search = searchParams.search.toLowerCase();
+      products = products.filter(p => p.name.toLowerCase().includes(search));
+    }
+
+    // Filter by price range
+    if (searchParams.minPrice) {
+      products = products.filter(p => p.price >= parseFloat(searchParams.minPrice!));
+    }
+    if (searchParams.maxPrice) {
+      products = products.filter(p => p.price <= parseFloat(searchParams.maxPrice!));
+    }
+
+    // Sort
+    switch (searchParams.sort) {
+      case 'price_asc':
+        products.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_desc':
+        products.sort((a, b) => b.price - a.price);
+        break;
+      case 'name':
+        products.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'newest':
+      default:
+        // Already in order
+        break;
+    }
+
+    return products;
+  }
+
+  const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
   let query = supabase
@@ -100,6 +146,11 @@ async function getProducts(searchParams: {
 }
 
 async function getCategories(): Promise<Category[]> {
+  if (isDemoMode()) {
+    return mockCategories;
+  }
+
+  const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase
     .from('categories')
