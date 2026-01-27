@@ -1,6 +1,8 @@
 # Next Store
 
-An open-source e-commerce platform built with Next.js 14+, Material UI, Supabase, and Stripe.
+An open-source e-commerce platform built with Next.js, Tailwind CSS, Supabase, and Stripe.
+
+**[Live Demo](https://next-store-simonsruggis-projects.vercel.app)**
 
 ## Features
 
@@ -16,8 +18,8 @@ An open-source e-commerce platform built with Next.js 14+, Material UI, Supabase
 
 ## Tech Stack
 
-- **Framework**: Next.js 14+ (App Router)
-- **UI**: Material UI v5
+- **Framework**: Next.js 15+ (App Router)
+- **UI**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL)
 - **Auth**: Supabase Auth
 - **Payments**: Stripe + PayPal
@@ -73,7 +75,7 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see the storefront.
-Open [http://localhost:3000/admin](http://localhost:3000/admin) to access the admin dashboard.
+Open [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to access the admin dashboard.
 
 ## Deployment
 
