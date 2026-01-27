@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
 import { useDemoProductsStore } from '@/lib/store/demo-products';
 import AddToCartMinimal from '@/components/storefront/AddToCartMinimal';
 
-export default function ProductsPage() {
+function ProductsContent() {
   const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
   const products = useDemoProductsStore((state) => state.products);
@@ -195,5 +195,26 @@ export default function ProductsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="aspect-square bg-gray-200 rounded-lg mb-3" />
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+              <div className="h-4 bg-gray-200 rounded w-1/4" />
+            </div>
+          ))}
+        </div>
+      </main>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }

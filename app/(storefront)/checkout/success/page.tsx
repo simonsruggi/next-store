@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDemoOrdersStore, DemoOrder } from '@/lib/store/demo-orders';
 import { formatPrice } from '@/lib/utils';
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order');
   const [order, setOrder] = useState<DemoOrder | null>(null);
@@ -145,5 +145,17 @@ export default function CheckoutSuccessPage() {
         </Link>
       </div>
     </main>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }
