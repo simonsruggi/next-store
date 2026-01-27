@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
@@ -16,6 +17,7 @@ import {
   MenuItem,
   Button,
   Divider,
+  Skeleton,
 } from '@mui/material';
 import type { Category } from '@/types';
 
@@ -28,7 +30,7 @@ interface ProductFiltersProps {
   currentMaxPrice?: string;
 }
 
-export default function ProductFilters({
+function ProductFiltersContent({
   categories,
   currentCategory,
   currentSort,
@@ -145,5 +147,25 @@ export default function ProductFilters({
         Rimuovi filtri
       </Button>
     </Paper>
+  );
+}
+
+function FiltersSkeleton() {
+  return (
+    <Paper sx={{ p: 2 }}>
+      <Skeleton variant="text" width="60%" height={32} />
+      <Skeleton variant="rectangular" height={40} sx={{ mb: 3, mt: 2 }} />
+      <Skeleton variant="rectangular" height={40} sx={{ mb: 3 }} />
+      <Skeleton variant="text" width="40%" />
+      <Skeleton variant="rectangular" height={200} sx={{ mt: 1 }} />
+    </Paper>
+  );
+}
+
+export default function ProductFilters(props: ProductFiltersProps) {
+  return (
+    <Suspense fallback={<FiltersSkeleton />}>
+      <ProductFiltersContent {...props} />
+    </Suspense>
   );
 }

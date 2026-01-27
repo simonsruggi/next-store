@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Container,
@@ -15,7 +15,7 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { createClient } from '@/lib/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
 
-export default function PayPalCheckoutPage() {
+function PayPalCheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -27,6 +27,8 @@ export default function PayPalCheckoutPage() {
   useEffect(() => {
     if (orderId) {
       loadOrder();
+    } else {
+      setLoading(false);
     }
   }, [orderId]);
 
@@ -140,11 +142,25 @@ export default function PayPalCheckoutPage() {
               style={{ layout: 'vertical' }}
               createOrder={createPayPalOrder}
               onApprove={onApprove}
-              onError={(err) => setError('Errore durante il pagamento PayPal')}
+              onError={() => setError('Errore durante il pagamento PayPal')}
             />
           </PayPalScriptProvider>
         </CardContent>
       </Card>
     </Container>
+  );
+}
+
+export default function PayPalCheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+          <CircularProgress />
+        </Container>
+      }
+    >
+      <PayPalCheckoutContent />
+    </Suspense>
   );
 }
