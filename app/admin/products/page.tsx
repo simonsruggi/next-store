@@ -48,14 +48,11 @@ export default async function AdminProductsPage() {
         <Typography variant="h4" component="h1">
           Prodotti
         </Typography>
-        <Button
-          component={Link}
-          href="/admin/products/new"
-          variant="contained"
-          startIcon={<AddIcon />}
-        >
-          Nuovo Prodotto
-        </Button>
+        <Link href="/admin/products/new" style={{ textDecoration: 'none' }}>
+          <Button variant="contained" startIcon={<AddIcon />}>
+            Nuovo Prodotto
+          </Button>
+        </Link>
       </Box>
 
       <Card>
@@ -132,13 +129,14 @@ export default async function AdminProductsPage() {
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <IconButton
-                          component={Link}
+                        <Link
                           href={`/admin/products/${product.id}`}
-                          size="small"
+                          style={{ textDecoration: 'none' }}
                         >
-                          <EditIcon />
-                        </IconButton>
+                          <IconButton size="small">
+                            <EditIcon />
+                          </IconButton>
+                        </Link>
                         <DeleteProductButton productId={product.id} productName={product.name} />
                       </TableCell>
                     </TableRow>
