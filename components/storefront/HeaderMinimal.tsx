@@ -31,8 +31,13 @@ export default function HeaderMinimal() {
           </button>
 
           {/* Logo */}
-          <Link href="/" className="text-lg font-semibold text-gray-900">
-            Store
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <span className="text-lg font-semibold text-gray-900 hidden sm:inline">Store</span>
           </Link>
 
           {/* Desktop Navigation */}
