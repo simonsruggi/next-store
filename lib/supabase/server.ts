@@ -7,6 +7,38 @@ function isDemoMode(): boolean {
          process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
 }
 
+// Create a chainable mock query builder
+function createMockQueryBuilder() {
+  const result = { data: [], error: null, count: 0 };
+  const builder: any = {
+    select: () => builder,
+    insert: () => builder,
+    update: () => builder,
+    delete: () => builder,
+    eq: () => builder,
+    neq: () => builder,
+    gt: () => builder,
+    gte: () => builder,
+    lt: () => builder,
+    lte: () => builder,
+    like: () => builder,
+    ilike: () => builder,
+    is: () => builder,
+    in: () => builder,
+    contains: () => builder,
+    order: () => builder,
+    limit: () => builder,
+    range: () => builder,
+    single: async () => ({ data: null, error: null }),
+    maybeSingle: async () => ({ data: null, error: null }),
+    then: (resolve: any) => resolve(result),
+    data: [],
+    error: null,
+    count: 0,
+  };
+  return builder;
+}
+
 export async function createClient() {
   // In demo mode, return a mock client
   if (isDemoMode()) {
@@ -14,23 +46,7 @@ export async function createClient() {
       auth: {
         getUser: async () => ({ data: { user: null }, error: null }),
       },
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            single: async () => ({ data: null, error: null }),
-            order: () => ({
-              limit: () => ({ data: [], error: null }),
-              data: [],
-              error: null,
-            }),
-          }),
-          order: () => ({
-            limit: () => ({ data: [], error: null }),
-            data: [],
-            error: null,
-          }),
-        }),
-      }),
+      from: () => createMockQueryBuilder(),
     } as any;
   }
 
@@ -62,21 +78,7 @@ export async function createServiceClient() {
   // In demo mode, return a mock client
   if (isDemoMode()) {
     return {
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            single: async () => ({ data: null, error: null }),
-          }),
-        }),
-        insert: () => ({
-          select: () => ({
-            single: async () => ({ data: null, error: null }),
-          }),
-        }),
-        update: () => ({
-          eq: () => ({ error: null }),
-        }),
-      }),
+      from: () => createMockQueryBuilder(),
     } as any;
   }
 
