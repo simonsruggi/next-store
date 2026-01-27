@@ -2,34 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Switch,
-  Button,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
-import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
+import { useDemoProductsStore } from '@/lib/store/demo-products';
 import { slugify } from '@/lib/utils';
-import type { Category } from '@/types';
 
 export default function NewProductPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const categories = useDemoProductsStore((state) => state.categories);
+  const addProduct = useDemoProductsStore((state) => state.addProduct);
 
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: '',
     slug: '',
     description: '',
@@ -41,271 +25,238 @@ export default function NewProductPage() {
     stockQuantity: '0',
     isActive: true,
     isFeatured: false,
-    digitalFileUrl: '',
   });
 
   useEffect(() => {
-    loadCategories();
+    setMounted(true);
   }, []);
 
-  const loadCategories = async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
-    setCategories(data || []);
-  };
-
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setFormData((prev) => {
-      const updated = { ...prev, [field]: value };
-      // Auto-generate slug from name
-      if (field === 'name') {
-        updated.slug = slugify(value as string);
-      }
-      return updated;
+  const handleNameChange = (value: string) => {
+    setForm({
+      ...form,
+      name: value,
+      slug: slugify(value),
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
-    try {
-      const supabase = createClient();
+    const category = categories.find(c => c.id === form.categoryId);
 
-      const { error } = await supabase.from('products').insert({
-        name: formData.name,
-        slug: formData.slug,
-        description: formData.description || null,
-        price: parseFloat(formData.price),
-        compare_at_price: formData.compareAtPrice ? parseFloat(formData.compareAtPrice) : null,
-        type: formData.type,
-        category_id: formData.categoryId || null,
-        sku: formData.sku || null,
-        stock_quantity: parseInt(formData.stockQuantity, 10),
-        is_active: formData.isActive,
-        is_featured: formData.isFeatured,
-        digital_file_url: formData.type === 'digital' ? formData.digitalFileUrl : null,
-      });
+    addProduct({
+      name: form.name,
+      slug: form.slug,
+      description: form.description || null,
+      price: parseFloat(form.price),
+      compare_at_price: form.compareAtPrice ? parseFloat(form.compareAtPrice) : null,
+      type: form.type as 'physical' | 'digital',
+      category_id: form.categoryId || null,
+      sku: form.sku || null,
+      stock_quantity: parseInt(form.stockQuantity, 10),
+      is_active: form.isActive,
+      is_featured: form.isFeatured,
+      digital_file_url: null,
+      category: category || undefined,
+      images: [],
+    });
 
-      if (error) throw error;
-
-      router.push('/admin/products');
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || 'Errore durante la creazione del prodotto');
-    } finally {
-      setLoading(false);
-    }
+    router.push('/admin/products');
   };
 
-  return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Nuovo Prodotto
-      </Typography>
+  const isValid = form.name && form.price;
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+  if (!mounted) {
+    return (
+      <main className="p-6">
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="p-6">
+      <div className="mb-6">
+        <Link href="/admin/products" className="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">
+          &larr; Back to Products
+        </Link>
+        <h1 className="text-2xl font-semibold text-gray-900">New Product</h1>
+      </div>
 
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Informazioni Base
-                </Typography>
-
-                <TextField
-                  fullWidth
-                  label="Nome prodotto"
-                  value={formData.name}
-                  onChange={handleChange('name')}
-                  required
-                  sx={{ mb: 2 }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Slug (URL)"
-                  value={formData.slug}
-                  onChange={handleChange('slug')}
-                  required
-                  helperText="Usato nell'URL del prodotto"
-                  sx={{ mb: 2 }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Descrizione"
-                  value={formData.description}
-                  onChange={handleChange('description')}
-                  multiline
-                  rows={4}
-                />
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Prezzi
-                </Typography>
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Prezzo"
-                      type="number"
-                      value={formData.price}
-                      onChange={handleChange('price')}
-                      required
-                      inputProps={{ min: 0, step: 0.01 }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Prezzo originale (opzionale)"
-                      type="number"
-                      value={formData.compareAtPrice}
-                      onChange={handleChange('compareAtPrice')}
-                      inputProps={{ min: 0, step: 0.01 }}
-                      helperText="Per mostrare uno sconto"
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Inventario
-                </Typography>
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="SKU"
-                      value={formData.sku}
-                      onChange={handleChange('sku')}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Quantità in stock"
-                      type="number"
-                      value={formData.stockQuantity}
-                      onChange={handleChange('stockQuantity')}
-                      inputProps={{ min: 0 }}
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Organizzazione
-                </Typography>
-
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Tipo</InputLabel>
-                  <Select
-                    value={formData.type}
-                    label="Tipo"
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  >
-                    <MenuItem value="physical">Fisico</MenuItem>
-                    <MenuItem value="digital">Digitale</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Categoria</InputLabel>
-                  <Select
-                    value={formData.categoryId}
-                    label="Categoria"
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  >
-                    <MenuItem value="">Nessuna</MenuItem>
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                {formData.type === 'digital' && (
-                  <TextField
-                    fullWidth
-                    label="URL file digitale"
-                    value={formData.digitalFileUrl}
-                    onChange={handleChange('digitalFileUrl')}
-                    helperText="URL del file da scaricare"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Basic Info */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h2 className="font-medium text-gray-900 mb-4">Basic Information</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Product name *</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
                   />
-                )}
-              </CardContent>
-            </Card>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Slug (URL)</label>
+                  <input
+                    type="text"
+                    value={form.slug}
+                    onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Used in product URL</p>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Description</label>
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 resize-none"
+                  />
+                </div>
+              </div>
+            </div>
 
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Stato
-                </Typography>
+            {/* Pricing */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h2 className="font-medium text-gray-900 mb-4">Pricing</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Price *</label>
+                  <input
+                    type="number"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Compare at price</label>
+                  <input
+                    type="number"
+                    value={form.compareAtPrice}
+                    onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">To show a discount</p>
+                </div>
+              </div>
+            </div>
 
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.isActive}
-                      onChange={handleChange('isActive')}
-                    />
-                  }
-                  label="Attivo (visibile nel negozio)"
-                />
+            {/* Inventory */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h2 className="font-medium text-gray-900 mb-4">Inventory</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">SKU</label>
+                  <input
+                    type="text"
+                    value={form.sku}
+                    onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Stock quantity</label>
+                  <input
+                    type="number"
+                    value={form.stockQuantity}
+                    onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })}
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.isFeatured}
-                      onChange={handleChange('isFeatured')}
-                    />
-                  }
-                  label="In evidenza"
-                />
-              </CardContent>
-            </Card>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Organization */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h2 className="font-medium text-gray-900 mb-4">Organization</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Type</label>
+                  <select
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  >
+                    <option value="physical">Physical</option>
+                    <option value="digital">Digital</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Category</label>
+                  <select
+                    value={form.categoryId}
+                    onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  >
+                    <option value="">None</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
 
-            <Button
+            {/* Status */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h2 className="font-medium text-gray-900 mb-4">Status</h2>
+              <div className="space-y-3">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-0"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Active (visible in store)</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isFeatured}
+                    onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-0"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Featured</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
               type="submit"
-              variant="contained"
-              size="large"
-              fullWidth
-              disabled={loading}
-              startIcon={loading && <CircularProgress size={20} />}
+              disabled={!isValid || loading}
+              className={`w-full py-3 rounded-lg font-medium text-sm transition-colors ${
+                isValid && !loading
+                  ? 'bg-black text-white hover:bg-gray-800'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
             >
-              {loading ? 'Creazione...' : 'Crea Prodotto'}
-            </Button>
-          </Grid>
-        </Grid>
+              {loading ? 'Creating...' : 'Create Product'}
+            </button>
+          </div>
+        </div>
       </form>
-    </Box>
+    </main>
   );
 }

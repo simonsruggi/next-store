@@ -1,329 +1,199 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Box,
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  InputAdornment,
-  Breadcrumbs,
-} from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { useSearchParams } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
-import { isDemoMode, mockProducts, mockCategories } from '@/lib/mock-data';
-import AddToCartButton from '@/components/storefront/AddToCartButton';
-import ProductFilters from '@/components/storefront/ProductFilters';
-import type { Product, Category } from '@/types';
+import { useDemoProductsStore } from '@/lib/store/demo-products';
+import AddToCartMinimal from '@/components/storefront/AddToCartMinimal';
 
-interface ProductsPageProps {
-  searchParams: Promise<{
-    category?: string;
-    search?: string;
-    sort?: string;
-    minPrice?: string;
-    maxPrice?: string;
-  }>;
-}
+export default function ProductsPage() {
+  const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParams();
+  const products = useDemoProductsStore((state) => state.products);
+  const categories = useDemoProductsStore((state) => state.categories);
 
-async function getProducts(searchParams: {
-  category?: string;
-  search?: string;
-  sort?: string;
-  minPrice?: string;
-  maxPrice?: string;
-}): Promise<Product[]> {
-  if (isDemoMode()) {
-    let products = [...mockProducts];
+  const categorySlug = searchParams.get('category');
+  const searchQuery = searchParams.get('search');
+  const sortBy = searchParams.get('sort');
 
-    // Filter by category
-    if (searchParams.category) {
-      const category = mockCategories.find(c => c.slug === searchParams.category);
-      if (category) {
-        products = products.filter(p => p.category_id === category.id);
-      }
-    }
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-    // Filter by search
-    if (searchParams.search) {
-      const search = searchParams.search.toLowerCase();
-      products = products.filter(p => p.name.toLowerCase().includes(search));
-    }
+  // Filter and sort products
+  let filteredProducts = [...products].filter(p => p.is_active);
 
-    // Filter by price range
-    if (searchParams.minPrice) {
-      products = products.filter(p => p.price >= parseFloat(searchParams.minPrice!));
-    }
-    if (searchParams.maxPrice) {
-      products = products.filter(p => p.price <= parseFloat(searchParams.maxPrice!));
-    }
-
-    // Sort
-    switch (searchParams.sort) {
-      case 'price_asc':
-        products.sort((a, b) => a.price - b.price);
-        break;
-      case 'price_desc':
-        products.sort((a, b) => b.price - a.price);
-        break;
-      case 'name':
-        products.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'newest':
-      default:
-        // Already in order
-        break;
-    }
-
-    return products;
-  }
-
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
-
-  let query = supabase
-    .from('products')
-    .select(`
-      *,
-      images:product_images(*),
-      category:categories(*)
-    `)
-    .eq('is_active', true);
-
-  // Filter by category
-  if (searchParams.category) {
-    const { data: category } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('slug', searchParams.category)
-      .single();
-
+  if (categorySlug) {
+    const category = categories.find(c => c.slug === categorySlug);
     if (category) {
-      query = query.eq('category_id', category.id);
+      filteredProducts = filteredProducts.filter(p => p.category_id === category.id);
     }
   }
 
-  // Filter by search
-  if (searchParams.search) {
-    query = query.ilike('name', `%${searchParams.search}%`);
+  if (searchQuery) {
+    const search = searchQuery.toLowerCase();
+    filteredProducts = filteredProducts.filter(p => p.name.toLowerCase().includes(search));
   }
 
-  // Filter by price range
-  if (searchParams.minPrice) {
-    query = query.gte('price', parseFloat(searchParams.minPrice));
-  }
-  if (searchParams.maxPrice) {
-    query = query.lte('price', parseFloat(searchParams.maxPrice));
-  }
-
-  // Sort
-  switch (searchParams.sort) {
+  switch (sortBy) {
     case 'price_asc':
-      query = query.order('price', { ascending: true });
+      filteredProducts.sort((a, b) => a.price - b.price);
       break;
     case 'price_desc':
-      query = query.order('price', { ascending: false });
+      filteredProducts.sort((a, b) => b.price - a.price);
       break;
     case 'name':
-      query = query.order('name', { ascending: true });
-      break;
-    case 'newest':
-    default:
-      query = query.order('created_at', { ascending: false });
+      filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
       break;
   }
 
-  const { data } = await query;
-  return data || [];
-}
+  const currentCategory = categories.find((c) => c.slug === categorySlug);
 
-async function getCategories(): Promise<Category[]> {
-  if (isDemoMode()) {
-    return mockCategories;
+  if (!mounted) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="h-8 bg-gray-200 rounded w-48 mb-6" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="aspect-square bg-gray-200 rounded-lg mb-3" />
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+              <div className="h-4 bg-gray-200 rounded w-1/4" />
+            </div>
+          ))}
+        </div>
+      </main>
+    );
   }
-
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('is_active', true)
-    .order('name');
-
-  return data || [];
-}
-
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const params = await searchParams;
-  const [products, categories] = await Promise.all([
-    getProducts(params),
-    getCategories(),
-  ]);
-
-  const currentCategory = categories.find((c) => c.slug === params.category);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Breadcrumbs */}
-      <Breadcrumbs sx={{ mb: 3 }}>
-        <Link href="/">
-          <Typography color="text.secondary">Home</Typography>
-        </Link>
-        <Typography color="text.primary">
-          {currentCategory ? currentCategory.name : 'Tutti i prodotti'}
-        </Typography>
-      </Breadcrumbs>
+    <main className="max-w-6xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-6">
+        <nav className="text-sm text-gray-500 mb-2">
+          <Link href="/" className="hover:text-gray-900">Home</Link>
+          <span className="mx-2">/</span>
+          <span className="text-gray-900">{currentCategory?.name || 'All Products'}</span>
+        </nav>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          {currentCategory?.name || 'All Products'}
+        </h1>
+      </div>
 
-      <Typography variant="h4" component="h1" gutterBottom>
-        {currentCategory ? currentCategory.name : 'Tutti i Prodotti'}
-      </Typography>
+      <div className="flex gap-8">
+        {/* Sidebar Filters */}
+        <aside className="w-48 shrink-0 hidden md:block">
+          {/* Categories */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Categories</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/products"
+                  className={`text-sm ${!categorySlug ? 'text-black font-medium' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  All
+                </Link>
+              </li>
+              {categories.map((cat) => (
+                <li key={cat.id}>
+                  <Link
+                    href={`/products?category=${cat.slug}`}
+                    className={`text-sm ${categorySlug === cat.slug ? 'text-black font-medium' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      {currentCategory?.description && (
-        <Typography color="text.secondary" sx={{ mb: 3 }}>
-          {currentCategory.description}
-        </Typography>
-      )}
-
-      <Grid container spacing={3}>
-        {/* Filters Sidebar */}
-        <Grid size={{ xs: 12, md: 3 }}>
-          <ProductFilters
-            categories={categories}
-            currentCategory={params.category}
-            currentSort={params.sort}
-            currentSearch={params.search}
-            currentMinPrice={params.minPrice}
-            currentMaxPrice={params.maxPrice}
-          />
-        </Grid>
+          {/* Sort */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Sort by</h3>
+            <ul className="space-y-2">
+              {[
+                { value: '', label: 'Newest' },
+                { value: 'price_asc', label: 'Price: Low to High' },
+                { value: 'price_desc', label: 'Price: High to Low' },
+                { value: 'name', label: 'Name' },
+              ].map((opt) => (
+                <li key={opt.value}>
+                  <Link
+                    href={`/products?${categorySlug ? `category=${categorySlug}&` : ''}${opt.value ? `sort=${opt.value}` : ''}`}
+                    className={`text-sm ${(sortBy || '') === opt.value ? 'text-black font-medium' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    {opt.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
 
         {/* Products Grid */}
-        <Grid size={{ xs: 12, md: 9 }}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography color="text.secondary">
-              {products.length} prodott{products.length === 1 ? 'o' : 'i'} trovati
-            </Typography>
-          </Box>
+        <div className="flex-1">
+          <p className="text-sm text-gray-500 mb-4">
+            {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+          </p>
 
-          {products.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <Typography variant="h6" color="text.secondary">
-                Nessun prodotto trovato
-              </Typography>
-              <Typography color="text.secondary">
-                Prova a modificare i filtri di ricerca
-              </Typography>
-            </Box>
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No products found</p>
+              <Link href="/products" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+                Clear filters
+              </Link>
+            </div>
           ) : (
-            <Grid container spacing={3}>
-              {products.map((product) => (
-                <Grid key={product.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                  <Card
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      '&:hover': {
-                        boxShadow: 4,
-                      },
-                    }}
-                  >
-                    <CardMedia
-                      component={Link}
-                      href={`/product/${product.slug}`}
-                      sx={{
-                        height: 200,
-                        bgcolor: 'grey.100',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {product.images && product.images[0] ? (
-                        <Box
-                          component="img"
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredProducts.map((product) => (
+                <article key={product.id} className="group">
+                  <Link href={`/product/${product.slug}`} className="block">
+                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3">
+                      {product.images?.[0] ? (
+                        <img
                           src={product.images[0].url}
                           alt={product.name}
-                          sx={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <Typography variant="h2" color="text.secondary">
-                          📦
-                        </Typography>
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
                       )}
-                    </CardMedia>
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      {product.category && (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ textTransform: 'uppercase' }}
-                        >
-                          {product.category.name}
-                        </Typography>
-                      )}
-                      <Typography
-                        variant="h6"
-                        component={Link}
-                        href={`/product/${product.slug}`}
-                        sx={{
-                          textDecoration: 'none',
-                          color: 'inherit',
-                          display: 'block',
-                          '&:hover': { color: 'primary.main' },
-                        }}
-                      >
-                        {product.name}
-                      </Typography>
-                      <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography
-                          variant="h6"
-                          color="primary"
-                          sx={{ fontWeight: 700 }}
-                        >
+                    </div>
+                  </Link>
+
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/product/${product.slug}`}>
+                        <h2 className="text-sm font-medium text-gray-900 truncate hover:text-gray-600">
+                          {product.name}
+                        </h2>
+                      </Link>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm font-semibold text-gray-900">
                           {formatPrice(product.price)}
-                        </Typography>
+                        </span>
                         {product.compare_at_price && (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ textDecoration: 'line-through' }}
-                          >
+                          <span className="text-xs text-gray-400 line-through">
                             {formatPrice(product.compare_at_price)}
-                          </Typography>
+                          </span>
                         )}
-                      </Box>
-                      <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                        {product.type === 'digital' && (
-                          <Chip label="Digitale" size="small" color="info" />
-                        )}
-                        {product.stock_quantity === 0 && (
-                          <Chip label="Esaurito" size="small" color="error" />
-                        )}
-                      </Box>
-                    </CardContent>
-                    <CardActions sx={{ p: 2, pt: 0 }}>
-                      <AddToCartButton product={product} />
-                    </CardActions>
-                  </Card>
-                </Grid>
+                      </div>
+                    </div>
+
+                    <AddToCartMinimal product={product} />
+                  </div>
+                </article>
               ))}
-            </Grid>
+            </div>
           )}
-        </Grid>
-      </Grid>
-    </Container>
+        </div>
+      </div>
+    </main>
   );
 }

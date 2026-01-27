@@ -1,155 +1,120 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  IconButton,
-} from '@mui/material';
-import { Visibility as ViewIcon } from '@mui/icons-material';
-import { createClient } from '@/lib/supabase/server';
-import { formatPrice, formatDate } from '@/lib/utils';
-import type { Order } from '@/types';
+import { useDemoOrdersStore, DemoOrder } from '@/lib/store/demo-orders';
+import { formatPrice } from '@/lib/utils';
 
-const statusColors: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error'> = {
-  pending: 'warning',
-  processing: 'info',
-  shipped: 'info',
-  delivered: 'success',
-  cancelled: 'error',
-  refunded: 'error',
-};
+export default function AdminOrdersPage() {
+  const [mounted, setMounted] = useState(false);
+  const orders = useDemoOrdersStore((state) => state.orders);
 
-const paymentStatusColors: Record<string, 'default' | 'warning' | 'success' | 'error'> = {
-  pending: 'warning',
-  paid: 'success',
-  failed: 'error',
-  refunded: 'error',
-};
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-const statusLabels: Record<string, string> = {
-  pending: 'In attesa',
-  processing: 'In elaborazione',
-  shipped: 'Spedito',
-  delivered: 'Consegnato',
-  cancelled: 'Annullato',
-  refunded: 'Rimborsato',
-};
-
-const paymentStatusLabels: Record<string, string> = {
-  pending: 'In attesa',
-  paid: 'Pagato',
-  failed: 'Fallito',
-  refunded: 'Rimborsato',
-};
-
-async function getOrders() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      profile:profiles(full_name, email),
-      items:order_items(count)
-    `)
-    .order('created_at', { ascending: false });
-
-  return data || [];
-}
-
-export default async function AdminOrdersPage() {
-  const orders = await getOrders();
+  if (!mounted) {
+    return (
+      <main className="p-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Orders</h1>
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Ordini
-      </Typography>
+    <main className="p-6">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Orders</h1>
 
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Ordine</TableCell>
-                  <TableCell>Data</TableCell>
-                  <TableCell>Cliente</TableCell>
-                  <TableCell>Stato</TableCell>
-                  <TableCell>Pagamento</TableCell>
-                  <TableCell>Metodo</TableCell>
-                  <TableCell align="right">Totale</TableCell>
-                  <TableCell align="right">Azioni</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {orders.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                      Nessun ordine
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  orders.map((order: Order & { profile?: { full_name?: string; email?: string } }) => (
-                    <TableRow key={order.id} hover>
-                      <TableCell>
-                        <Link href={`/admin/orders/${order.id}`}>
-                          <Typography variant="body2" fontWeight={600}>
-                            #{order.order_number}
-                          </Typography>
-                        </Link>
-                      </TableCell>
-                      <TableCell>{formatDate(order.created_at)}</TableCell>
-                      <TableCell>
-                        {order.profile?.full_name || order.profile?.email || 'Guest'}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={statusLabels[order.status] || order.status}
-                          size="small"
-                          color={statusColors[order.status] || 'default'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={paymentStatusLabels[order.payment_status] || order.payment_status}
-                          size="small"
-                          variant="outlined"
-                          color={paymentStatusColors[order.payment_status] || 'default'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ textTransform: 'uppercase' }}>
-                          {order.payment_method}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        {formatPrice(order.total)}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          component={Link}
-                          href={`/admin/orders/${order.id}`}
-                          size="small"
-                        >
-                          <ViewIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    </Box>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+              <th className="px-4 py-3 font-medium">Order</th>
+              <th className="px-4 py-3 font-medium">Date</th>
+              <th className="px-4 py-3 font-medium">Customer</th>
+              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Payment</th>
+              <th className="px-4 py-3 font-medium text-right">Total</th>
+              <th className="px-4 py-3 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  No orders yet. Complete a checkout to see orders here.
+                </td>
+              </tr>
+            ) : (
+              orders.map((order) => (
+                <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <span className="text-sm font-medium text-blue-600">
+                      {order.order_number}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {new Date(order.created_at).toLocaleDateString('en-US')}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{order.customer_name}</p>
+                      <p className="text-xs text-gray-500">{order.customer_email}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={order.status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <PaymentBadge status={order.payment_status} />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-right font-medium">
+                    {formatPrice(order.total)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: 'bg-amber-50 text-amber-700',
+    processing: 'bg-blue-50 text-blue-700',
+    shipped: 'bg-indigo-50 text-indigo-700',
+    delivered: 'bg-green-50 text-green-700',
+    cancelled: 'bg-red-50 text-red-700',
+  };
+
+  return (
+    <span className={`px-2 py-1 text-xs rounded capitalize ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
+      {status}
+    </span>
+  );
+}
+
+function PaymentBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: 'bg-amber-50 text-amber-700',
+    paid: 'bg-green-50 text-green-700',
+  };
+
+  return (
+    <span className={`px-2 py-1 text-xs rounded capitalize ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
+      {status}
+    </span>
   );
 }

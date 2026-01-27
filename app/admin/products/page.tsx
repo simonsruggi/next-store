@@ -1,152 +1,133 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  IconButton,
-  Avatar,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
-import { createClient } from '@/lib/supabase/server';
+import { useDemoProductsStore } from '@/lib/store/demo-products';
 import { formatPrice } from '@/lib/utils';
-import DeleteProductButton from '@/components/admin/DeleteProductButton';
-import type { Product } from '@/types';
 
-async function getProducts(): Promise<Product[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('products')
-    .select(`
-      *,
-      images:product_images(*),
-      category:categories(name)
-    `)
-    .order('created_at', { ascending: false });
+export default function AdminProductsPage() {
+  const [mounted, setMounted] = useState(false);
+  const products = useDemoProductsStore((state) => state.products);
+  const deleteProduct = useDemoProductsStore((state) => state.deleteProduct);
 
-  return data || [];
-}
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-export default async function AdminProductsPage() {
-  const products = await getProducts();
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this product?')) {
+      deleteProduct(id);
+    }
+  };
+
+  if (!mounted) {
+    return (
+      <main className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+        </div>
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Prodotti
-        </Typography>
-        <Link href="/admin/products/new" style={{ textDecoration: 'none' }}>
-          <Button variant="contained" startIcon={<AddIcon />}>
-            Nuovo Prodotto
-          </Button>
+    <main className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+        <Link
+          href="/admin/products/new"
+          className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800"
+        >
+          + New Product
         </Link>
-      </Box>
+      </div>
 
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Prodotto</TableCell>
-                  <TableCell>Categoria</TableCell>
-                  <TableCell>Tipo</TableCell>
-                  <TableCell align="right">Prezzo</TableCell>
-                  <TableCell align="right">Stock</TableCell>
-                  <TableCell>Stato</TableCell>
-                  <TableCell align="right">Azioni</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {products.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                      Nessun prodotto. Inizia aggiungendone uno!
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  products.map((product) => (
-                    <TableRow key={product.id} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar
-                            src={product.images?.[0]?.url}
-                            variant="rounded"
-                            sx={{ width: 48, height: 48 }}
-                          >
-                            📦
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              {product.name}
-                            </Typography>
-                            {product.sku && (
-                              <Typography variant="caption" color="text.secondary">
-                                SKU: {product.sku}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        {product.category?.name || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={product.type === 'digital' ? 'Digitale' : 'Fisico'}
-                          size="small"
-                          color={product.type === 'digital' ? 'info' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        {formatPrice(product.price)}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography
-                          color={product.stock_quantity <= 5 ? 'error' : 'inherit'}
-                        >
-                          {product.stock_quantity}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={product.is_active ? 'Attivo' : 'Bozza'}
-                          size="small"
-                          color={product.is_active ? 'success' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <Link
-                          href={`/admin/products/${product.id}`}
-                          style={{ textDecoration: 'none' }}
-                        >
-                          <IconButton size="small">
-                            <EditIcon />
-                          </IconButton>
-                        </Link>
-                        <DeleteProductButton productId={product.id} productName={product.name} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    </Box>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+              <th className="px-4 py-3 font-medium">Product</th>
+              <th className="px-4 py-3 font-medium">Category</th>
+              <th className="px-4 py-3 font-medium">Type</th>
+              <th className="px-4 py-3 font-medium text-right">Price</th>
+              <th className="px-4 py-3 font-medium text-right">Stock</th>
+              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  No products. Start by adding one!
+                </td>
+              </tr>
+            ) : (
+              products.map((product) => (
+                <tr key={product.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        {product.images?.[0] ? (
+                          <img
+                            src={product.images[0].url}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
+                            ?
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                        {product.sku && (
+                          <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {product.category?.name || '-'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 text-xs rounded ${
+                      product.type === 'digital' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {product.type === 'digital' ? 'Digital' : 'Physical'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-right font-medium">
+                    {formatPrice(product.price)}
+                  </td>
+                  <td className={`px-4 py-3 text-sm text-right ${
+                    product.stock_quantity <= 5 ? 'text-red-600' : 'text-gray-900'
+                  }`}>
+                    {product.stock_quantity}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 text-xs rounded ${
+                      product.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {product.is_active ? 'Active' : 'Draft'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </main>
   );
 }

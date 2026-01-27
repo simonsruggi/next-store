@@ -1,301 +1,175 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  TextField,
-  FormControlLabel,
-  Switch,
-  Button,
-  Alert,
-  CircularProgress,
-  Divider,
-} from '@mui/material';
-import { createClient } from '@/lib/supabase/client';
-
-interface StoreSettings {
-  name: string;
-  currency: string;
-  currencySymbol: string;
-  taxRate: number;
-  freeShippingThreshold: number | null;
-}
-
-interface PaymentSettings {
-  stripe: boolean;
-  paypal: boolean;
-  cod: boolean;
-}
+import { useDemoSettingsStore } from '@/lib/store/demo-settings';
 
 export default function AdminSettingsPage() {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'Next Store',
-    currency: 'EUR',
-    currencySymbol: '€',
-    taxRate: 22,
-    freeShippingThreshold: 50,
-  });
+  const store = useDemoSettingsStore((state) => state.store);
+  const payments = useDemoSettingsStore((state) => state.payments);
+  const updateStoreSettings = useDemoSettingsStore((state) => state.updateStoreSettings);
+  const updatePaymentSettings = useDemoSettingsStore((state) => state.updatePaymentSettings);
 
-  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
-    stripe: true,
-    paypal: true,
-    cod: true,
-  });
+  const [storeForm, setStoreForm] = useState(store);
+  const [paymentForm, setPaymentForm] = useState(payments);
 
   useEffect(() => {
-    loadSettings();
+    setMounted(true);
   }, []);
 
-  const loadSettings = async () => {
-    const supabase = createClient();
+  useEffect(() => {
+    setStoreForm(store);
+    setPaymentForm(payments);
+  }, [store, payments]);
 
-    const { data: general } = await supabase
-      .from('store_settings')
-      .select('value')
-      .eq('key', 'general')
-      .single();
-
-    const { data: payments } = await supabase
-      .from('store_settings')
-      .select('value')
-      .eq('key', 'payments')
-      .single();
-
-    if (general?.value) {
-      setStoreSettings(general.value as StoreSettings);
-    }
-    if (payments?.value) {
-      setPaymentSettings(payments.value as PaymentSettings);
-    }
-
-    setLoading(false);
+  const handleSave = () => {
+    updateStoreSettings(storeForm);
+    updatePaymentSettings(paymentForm);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
-    setSuccess(false);
-
-    try {
-      const supabase = createClient();
-
-      // Update general settings
-      await supabase
-        .from('store_settings')
-        .upsert({ key: 'general', value: storeSettings });
-
-      // Update payment settings
-      await supabase
-        .from('store_settings')
-        .upsert({ key: 'payments', value: paymentSettings });
-
-      setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'Errore durante il salvataggio');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
+  if (!mounted) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
+      <main className="p-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Settings</h1>
+        <p className="text-gray-500">Loading...</p>
+      </main>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Impostazioni
-      </Typography>
+    <main className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
+        {saved && (
+          <span className="text-sm text-green-600">Settings saved!</span>
+        )}
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Impostazioni salvate con successo
-        </Alert>
-      )}
-
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Informazioni Negozio
-              </Typography>
-
-              <TextField
-                fullWidth
-                label="Nome negozio"
-                value={storeSettings.name}
-                onChange={(e) =>
-                  setStoreSettings({ ...storeSettings, name: e.target.value })
-                }
-                sx={{ mb: 2 }}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Store Info */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="font-medium text-gray-900 mb-4">Store Information</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Store name</label>
+              <input
+                type="text"
+                value={storeForm.name}
+                onChange={(e) => setStoreForm({ ...storeForm, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Currency</label>
+                <input
+                  type="text"
+                  value={storeForm.currency}
+                  onChange={(e) => setStoreForm({ ...storeForm, currency: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Symbol</label>
+                <input
+                  type="text"
+                  value={storeForm.currencySymbol}
+                  onChange={(e) => setStoreForm({ ...storeForm, currencySymbol: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
 
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Valuta"
-                    value={storeSettings.currency}
-                    onChange={(e) =>
-                      setStoreSettings({ ...storeSettings, currency: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Simbolo valuta"
-                    value={storeSettings.currencySymbol}
-                    onChange={(e) =>
-                      setStoreSettings({ ...storeSettings, currencySymbol: e.target.value })
-                    }
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Tasse e Spedizione
-              </Typography>
-
-              <TextField
-                fullWidth
-                label="Aliquota IVA (%)"
+        {/* Tax & Shipping */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h2 className="font-medium text-gray-900 mb-4">Tax & Shipping</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Tax rate (%)</label>
+              <input
                 type="number"
-                value={storeSettings.taxRate}
-                onChange={(e) =>
-                  setStoreSettings({
-                    ...storeSettings,
-                    taxRate: parseFloat(e.target.value) || 0,
-                  })
-                }
-                inputProps={{ min: 0, max: 100 }}
-                sx={{ mb: 2 }}
+                value={storeForm.taxRate}
+                onChange={(e) => setStoreForm({ ...storeForm, taxRate: parseFloat(e.target.value) || 0 })}
+                min="0"
+                max="100"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
               />
-
-              <TextField
-                fullWidth
-                label="Soglia spedizione gratuita"
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Free shipping threshold</label>
+              <input
                 type="number"
-                value={storeSettings.freeShippingThreshold || ''}
-                onChange={(e) =>
-                  setStoreSettings({
-                    ...storeSettings,
-                    freeShippingThreshold: e.target.value
-                      ? parseFloat(e.target.value)
-                      : null,
-                  })
-                }
-                inputProps={{ min: 0 }}
-                helperText="Lascia vuoto per disabilitare"
+                value={storeForm.freeShippingThreshold || ''}
+                onChange={(e) => setStoreForm({
+                  ...storeForm,
+                  freeShippingThreshold: e.target.value ? parseFloat(e.target.value) : null,
+                })}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
               />
-            </CardContent>
-          </Card>
-        </Grid>
+              <p className="text-xs text-gray-400 mt-1">Leave empty to disable</p>
+            </div>
+          </div>
+        </div>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Metodi di Pagamento
-              </Typography>
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={paymentSettings.stripe}
-                    onChange={(e) =>
-                      setPaymentSettings({
-                        ...paymentSettings,
-                        stripe: e.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="Stripe (Carte di credito)"
+        {/* Payment Methods */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 lg:col-span-2">
+          <h2 className="font-medium text-gray-900 mb-4">Payment Methods</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="checkbox"
+                checked={paymentForm.stripe}
+                onChange={(e) => setPaymentForm({ ...paymentForm, stripe: e.target.checked })}
+                className="w-4 h-4 mt-0.5 rounded border-gray-300 text-black focus:ring-0"
               />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 6, mb: 2 }}>
-                Pagamenti con carta tramite Stripe
-              </Typography>
-
-              <Divider sx={{ my: 2 }} />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={paymentSettings.paypal}
-                    onChange={(e) =>
-                      setPaymentSettings({
-                        ...paymentSettings,
-                        paypal: e.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="PayPal"
+              <div>
+                <span className="text-sm font-medium text-gray-900">Stripe</span>
+                <p className="text-xs text-gray-500">Credit card payments via Stripe</p>
+              </div>
+            </label>
+            <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="checkbox"
+                checked={paymentForm.paypal}
+                onChange={(e) => setPaymentForm({ ...paymentForm, paypal: e.target.checked })}
+                className="w-4 h-4 mt-0.5 rounded border-gray-300 text-black focus:ring-0"
               />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 6, mb: 2 }}>
-                Pagamenti tramite conto PayPal
-              </Typography>
-
-              <Divider sx={{ my: 2 }} />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={paymentSettings.cod}
-                    onChange={(e) =>
-                      setPaymentSettings({
-                        ...paymentSettings,
-                        cod: e.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="Contrassegno"
+              <div>
+                <span className="text-sm font-medium text-gray-900">PayPal</span>
+                <p className="text-xs text-gray-500">Payments via PayPal account</p>
+              </div>
+            </label>
+            <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="checkbox"
+                checked={paymentForm.cod}
+                onChange={(e) => setPaymentForm({ ...paymentForm, cod: e.target.checked })}
+                className="w-4 h-4 mt-0.5 rounded border-gray-300 text-black focus:ring-0"
               />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 6 }}>
-                Pagamento alla consegna
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+              <div>
+                <span className="text-sm font-medium text-gray-900">Cash on Delivery</span>
+                <p className="text-xs text-gray-500">Payment at delivery</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
 
-      <Box sx={{ mt: 3 }}>
-        <Button
-          variant="contained"
-          size="large"
+      <div className="mt-6">
+        <button
           onClick={handleSave}
-          disabled={saving}
-          startIcon={saving && <CircularProgress size={20} />}
+          className="px-6 py-3 bg-black text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors"
         >
-          {saving ? 'Salvataggio...' : 'Salva Impostazioni'}
-        </Button>
-      </Box>
-    </Box>
+          Save Settings
+        </button>
+      </div>
+    </main>
   );
 }

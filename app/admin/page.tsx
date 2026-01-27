@@ -1,194 +1,176 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Button,
-} from '@mui/material';
-import {
-  TrendingUp as RevenueIcon,
-  ShoppingCart as OrdersIcon,
-  Inventory as ProductsIcon,
-  People as CustomersIcon,
-} from '@mui/icons-material';
-import { createClient } from '@/lib/supabase/server';
-import { formatPrice, formatDate } from '@/lib/utils';
-import type { Order, PaymentStatus } from '@/types';
+import { useDemoOrdersStore } from '@/lib/store/demo-orders';
+import { useDemoProductsStore } from '@/lib/store/demo-products';
+import { formatPrice } from '@/lib/utils';
 
-async function getStats() {
-  const supabase = await createClient();
+export default function AdminDashboard() {
+  const [mounted, setMounted] = useState(false);
+  const orders = useDemoOrdersStore((state) => state.orders);
+  const products = useDemoProductsStore((state) => state.products);
 
-  const [orders, products, customers] = await Promise.all([
-    supabase.from('orders').select('id, total, payment_status'),
-    supabase.from('products').select('id', { count: 'exact' }),
-    supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'customer'),
-  ]);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const paidOrders = orders.data?.filter((o: { payment_status: PaymentStatus; total: number }) => o.payment_status === 'paid') || [];
-  const totalRevenue = paidOrders.reduce((sum: number, o: { total: number }) => sum + o.total, 0);
+  // Calculate stats
+  const paidOrders = orders.filter(o => o.payment_status === 'paid');
+  const totalRevenue = paidOrders.reduce((sum, o) => sum + o.total, 0);
+  const recentOrders = orders.slice(0, 5);
 
-  return {
-    totalRevenue,
-    totalOrders: orders.data?.length || 0,
-    totalProducts: products.count || 0,
-    totalCustomers: customers.count || 0,
-  };
-}
-
-async function getRecentOrders() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('orders')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  return data || [];
-}
-
-const statusColors: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error'> = {
-  pending: 'warning',
-  processing: 'info',
-  shipped: 'info',
-  delivered: 'success',
-  cancelled: 'error',
-  refunded: 'error',
-};
-
-export default async function AdminDashboard() {
-  const [stats, recentOrders] = await Promise.all([
-    getStats(),
-    getRecentOrders(),
-  ]);
-
-  const statCards = [
-    {
-      title: 'Fatturato',
-      value: formatPrice(stats.totalRevenue),
-      icon: <RevenueIcon sx={{ fontSize: 40 }} />,
-      color: 'success.main',
-    },
-    {
-      title: 'Ordini',
-      value: stats.totalOrders.toString(),
-      icon: <OrdersIcon sx={{ fontSize: 40 }} />,
-      color: 'primary.main',
-    },
-    {
-      title: 'Prodotti',
-      value: stats.totalProducts.toString(),
-      icon: <ProductsIcon sx={{ fontSize: 40 }} />,
-      color: 'warning.main',
-    },
-    {
-      title: 'Clienti',
-      value: stats.totalCustomers.toString(),
-      icon: <CustomersIcon sx={{ fontSize: 40 }} />,
-      color: 'info.main',
-    },
-  ];
+  if (!mounted) {
+    return (
+      <main className="p-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Dashboard</h1>
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Dashboard
-      </Typography>
+    <main className="p-6">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Dashboard</h1>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {statCards.map((stat) => (
-          <Grid key={stat.title} size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography color="text.secondary" gutterBottom>
-                      {stat.title}
-                    </Typography>
-                    <Typography variant="h4">{stat.value}</Typography>
-                  </Box>
-                  <Box sx={{ color: stat.color }}>{stat.icon}</Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Revenue" value={formatPrice(totalRevenue)} color="green" />
+        <StatCard label="Orders" value={orders.length.toString()} color="blue" />
+        <StatCard label="Products" value={products.length.toString()} color="amber" />
+        <StatCard label="Customers" value={new Set(orders.map(o => o.customer_email)).size.toString()} color="purple" />
+      </div>
 
       {/* Recent Orders */}
-      <Card>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">Ordini Recenti</Typography>
-            <Link href="/admin/orders">
-              <Button size="small">
-                Vedi tutti
-              </Button>
-            </Link>
-          </Box>
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <h2 className="font-medium text-gray-900">Recent Orders</h2>
+          <Link href="/admin/orders" className="text-sm text-blue-600 hover:text-blue-700">
+            View all
+          </Link>
+        </div>
 
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Ordine</TableCell>
-                  <TableCell>Data</TableCell>
-                  <TableCell>Stato</TableCell>
-                  <TableCell>Pagamento</TableCell>
-                  <TableCell align="right">Totale</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {recentOrders.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      Nessun ordine
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  recentOrders.map((order: Order) => (
-                    <TableRow key={order.id} hover>
-                      <TableCell>
-                        <Link href={`/admin/orders/${order.id}`}>
-                          #{order.order_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{formatDate(order.created_at)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={order.status}
-                          size="small"
-                          color={statusColors[order.status] || 'default'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={order.payment_status}
-                          size="small"
-                          variant="outlined"
-                          color={order.payment_status === 'paid' ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        {formatPrice(order.total)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    </Box>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+                <th className="px-4 py-3 font-medium">Order</th>
+                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Payment</th>
+                <th className="px-4 py-3 font-medium text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                    No orders yet. Complete a checkout to see orders here.
+                  </td>
+                </tr>
+              ) : (
+                recentOrders.map((order) => (
+                  <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/orders/${order.id}`} className="text-blue-600 hover:underline">
+                        {order.order_number}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {new Date(order.created_at).toLocaleDateString('en-US')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={order.status} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <PaymentBadge status={order.payment_status} />
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {formatPrice(order.total)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link
+          href="/admin/products/new"
+          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <p className="text-sm font-medium text-gray-900">Add Product</p>
+          <p className="text-xs text-gray-500 mt-1">Create a new product</p>
+        </Link>
+        <Link
+          href="/admin/orders"
+          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <p className="text-sm font-medium text-gray-900">View Orders</p>
+          <p className="text-xs text-gray-500 mt-1">Manage customer orders</p>
+        </Link>
+        <Link
+          href="/admin/shipping"
+          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <p className="text-sm font-medium text-gray-900">Shipping</p>
+          <p className="text-xs text-gray-500 mt-1">Configure shipping methods</p>
+        </Link>
+        <Link
+          href="/admin/settings"
+          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <p className="text-sm font-medium text-gray-900">Settings</p>
+          <p className="text-xs text-gray-500 mt-1">Store configuration</p>
+        </Link>
+      </div>
+    </main>
+  );
+}
+
+function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
+  const colors: Record<string, string> = {
+    green: 'text-green-600',
+    blue: 'text-blue-600',
+    amber: 'text-amber-600',
+    purple: 'text-purple-600',
+  };
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <p className="text-sm text-gray-500 mb-1">{label}</p>
+      <p className={`text-2xl font-semibold ${colors[color] || 'text-gray-900'}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: 'bg-amber-50 text-amber-700',
+    processing: 'bg-blue-50 text-blue-700',
+    shipped: 'bg-indigo-50 text-indigo-700',
+    delivered: 'bg-green-50 text-green-700',
+    cancelled: 'bg-red-50 text-red-700',
+  };
+
+  return (
+    <span className={`px-2 py-1 text-xs rounded capitalize ${styles[status] || 'bg-gray-50 text-gray-700'}`}>
+      {status}
+    </span>
+  );
+}
+
+function PaymentBadge({ status }: { status: string }) {
+  return (
+    <span className={`px-2 py-1 text-xs rounded capitalize ${
+      status === 'paid' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+    }`}>
+      {status}
+    </span>
   );
 }

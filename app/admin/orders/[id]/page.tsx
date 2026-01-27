@@ -1,287 +1,194 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Divider,
-  Button,
-} from '@mui/material';
-import { ArrowBack as BackIcon } from '@mui/icons-material';
-import { createClient } from '@/lib/supabase/server';
-import { formatPrice, formatDateTime } from '@/lib/utils';
-import OrderStatusUpdate from '@/components/admin/OrderStatusUpdate';
+import { useDemoOrdersStore, DemoOrder } from '@/lib/store/demo-orders';
+import { formatPrice } from '@/lib/utils';
 
-interface OrderDetailPageProps {
-  params: Promise<{ id: string }>;
-}
+export default function OrderDetailPage() {
+  const params = useParams();
+  const orderId = params.id as string;
+  const [mounted, setMounted] = useState(false);
+  const [order, setOrder] = useState<DemoOrder | null>(null);
+  const getOrder = useDemoOrdersStore((state) => state.getOrder);
+  const updateOrderStatus = useDemoOrdersStore((state) => state.updateOrderStatus);
 
-async function getOrder(id: string) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      profile:profiles(full_name, email, phone),
-      items:order_items(*),
-      shipping_address:addresses!orders_shipping_address_id_fkey(*),
-      billing_address:addresses!orders_billing_address_id_fkey(*)
-    `)
-    .eq('id', id)
-    .single();
+  useEffect(() => {
+    setMounted(true);
+    if (orderId) {
+      const foundOrder = getOrder(orderId);
+      setOrder(foundOrder || null);
+    }
+  }, [orderId, getOrder]);
 
-  return data;
-}
+  const handleStatusChange = (newStatus: DemoOrder['status']) => {
+    updateOrderStatus(orderId, newStatus);
+    setOrder((prev) => prev ? { ...prev, status: newStatus } : null);
+  };
 
-export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  const { id } = await params;
-  const order = await getOrder(id);
+  if (!mounted) {
+    return (
+      <main className="p-6">
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
 
   if (!order) {
-    notFound();
+    return (
+      <main className="p-6">
+        <Link href="/admin/orders" className="text-sm text-blue-600 hover:underline mb-4 inline-block">
+          &larr; Back to Orders
+        </Link>
+        <p className="text-gray-500">Order not found</p>
+      </main>
+    );
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button
-          component={Link}
-          href="/admin/orders"
-          startIcon={<BackIcon />}
-          variant="text"
-        >
-          Ordini
-        </Button>
-        <Typography variant="h4" component="h1">
-          Ordine #{order.order_number}
-        </Typography>
-      </Box>
+    <main className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <Link href="/admin/orders" className="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">
+            &larr; Back to Orders
+          </Link>
+          <h1 className="text-2xl font-semibold text-gray-900">{order.order_number}</h1>
+          <p className="text-sm text-gray-500">
+            {new Date(order.created_at).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={order.status} />
+          <PaymentBadge status={order.payment_status} />
+        </div>
+      </div>
 
-      <Grid container spacing={3}>
-        {/* Order Info */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6">Articoli</Typography>
-              </Box>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Order Items */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <h2 className="font-medium text-gray-900">Order Items</h2>
+            </div>
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+                  <th className="px-4 py-3 font-medium">Product</th>
+                  <th className="px-4 py-3 font-medium text-right">Qty</th>
+                  <th className="px-4 py-3 font-medium text-right">Price</th>
+                  <th className="px-4 py-3 font-medium text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.items.map((item, index) => (
+                  <tr key={index} className="border-b border-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-900">{item.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-right">{item.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-right">{formatPrice(item.price)}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
+                      {formatPrice(item.price * item.quantity)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="p-4 bg-gray-50 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subtotal</span>
+                <span>{formatPrice(order.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Shipping</span>
+                <span>{order.shipping === 0 ? 'Free' : formatPrice(order.shipping)}</span>
+              </div>
+              <div className="flex justify-between font-semibold text-lg pt-2 border-t border-gray-200">
+                <span>Total</span>
+                <span>{formatPrice(order.total)}</span>
+              </div>
+            </div>
+          </div>
 
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Prodotto</TableCell>
-                      <TableCell align="right">Prezzo</TableCell>
-                      <TableCell align="right">Qtà</TableCell>
-                      <TableCell align="right">Totale</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {order.items.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          {item.product_name}
-                          {item.variant_name && (
-                            <Typography variant="body2" color="text.secondary">
-                              {item.variant_name}
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell align="right">
-                          {formatPrice(item.unit_price)}
-                        </TableCell>
-                        <TableCell align="right">{item.quantity}</TableCell>
-                        <TableCell align="right">
-                          {formatPrice(item.total_price)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: 200, mb: 1 }}>
-                  <Typography>Subtotale</Typography>
-                  <Typography>{formatPrice(order.subtotal)}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: 200, mb: 1 }}>
-                  <Typography>Spedizione</Typography>
-                  <Typography>
-                    {order.shipping_cost === 0 ? 'Gratuita' : formatPrice(order.shipping_cost)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: 200, mb: 1 }}>
-                  <Typography>IVA</Typography>
-                  <Typography>{formatPrice(order.tax)}</Typography>
-                </Box>
-                <Divider sx={{ width: 200, my: 1 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: 200 }}>
-                  <Typography variant="h6">Totale</Typography>
-                  <Typography variant="h6" color="primary">
-                    {formatPrice(order.total)}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Addresses */}
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Indirizzo di Spedizione
-                  </Typography>
-                  {order.shipping_address ? (
-                    <Typography>
-                      {order.shipping_address.full_name}
-                      <br />
-                      {order.shipping_address.address_line1}
-                      {order.shipping_address.address_line2 && (
-                        <>
-                          <br />
-                          {order.shipping_address.address_line2}
-                        </>
-                      )}
-                      <br />
-                      {order.shipping_address.postal_code} {order.shipping_address.city}
-                      {order.shipping_address.state && ` (${order.shipping_address.state})`}
-                      <br />
-                      {order.shipping_address.country}
-                      {order.shipping_address.phone && (
-                        <>
-                          <br />
-                          Tel: {order.shipping_address.phone}
-                        </>
-                      )}
-                    </Typography>
-                  ) : (
-                    <Typography color="text.secondary">Non disponibile</Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Indirizzo di Fatturazione
-                  </Typography>
-                  {order.billing_address ? (
-                    <Typography>
-                      {order.billing_address.full_name}
-                      <br />
-                      {order.billing_address.address_line1}
-                      {order.billing_address.address_line2 && (
-                        <>
-                          <br />
-                          {order.billing_address.address_line2}
-                        </>
-                      )}
-                      <br />
-                      {order.billing_address.postal_code} {order.billing_address.city}
-                      <br />
-                      {order.billing_address.country}
-                    </Typography>
-                  ) : (
-                    <Typography color="text.secondary">
-                      Stesso dell'indirizzo di spedizione
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Grid>
+          {/* Update Status */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="font-medium text-gray-900 mb-4">Update Status</h2>
+            <div className="flex flex-wrap gap-2">
+              {(['pending', 'processing', 'shipped', 'delivered'] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleStatusChange(status)}
+                  className={`px-4 py-2 text-sm rounded-lg capitalize transition-colors ${
+                    order.status === status
+                      ? 'bg-black text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Sidebar */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Riepilogo
-              </Typography>
+        <div className="space-y-6">
+          {/* Customer */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="font-medium text-gray-900 mb-3">Customer</h2>
+            <p className="text-sm font-medium text-gray-900">{order.customer_name}</p>
+            <p className="text-sm text-gray-600">{order.customer_email}</p>
+          </div>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Data
-                </Typography>
-                <Typography>{formatDateTime(order.created_at)}</Typography>
-              </Box>
+          {/* Shipping Address */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="font-medium text-gray-900 mb-3">Shipping Address</h2>
+            <p className="text-sm text-gray-600">{order.customer_name}</p>
+            <p className="text-sm text-gray-600">{order.shipping_address}</p>
+          </div>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Stato Ordine
-                </Typography>
-                <Chip
-                  label={order.status}
-                  color={
-                    order.status === 'delivered' ? 'success' :
-                    order.status === 'cancelled' ? 'error' : 'info'
-                  }
-                  size="small"
-                />
-              </Box>
+          {/* Payment */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="font-medium text-gray-900 mb-3">Payment</h2>
+            <p className="text-sm text-gray-600 capitalize">{order.payment_method}</p>
+            <div className="mt-2">
+              <PaymentBadge status={order.payment_status} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Stato Pagamento
-                </Typography>
-                <Chip
-                  label={order.payment_status}
-                  color={order.payment_status === 'paid' ? 'success' : 'warning'}
-                  variant="outlined"
-                  size="small"
-                />
-              </Box>
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: 'bg-amber-50 text-amber-700',
+    processing: 'bg-blue-50 text-blue-700',
+    shipped: 'bg-indigo-50 text-indigo-700',
+    delivered: 'bg-green-50 text-green-700',
+  };
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Metodo Pagamento
-                </Typography>
-                <Typography sx={{ textTransform: 'uppercase' }}>
-                  {order.payment_method}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+  return (
+    <span className={`px-2 py-1 text-xs rounded capitalize ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
+      {status}
+    </span>
+  );
+}
 
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Cliente
-              </Typography>
-              {order.profile ? (
-                <>
-                  <Typography>{order.profile.full_name || 'Nome non disponibile'}</Typography>
-                  <Typography color="text.secondary">{order.profile.email}</Typography>
-                  {order.profile.phone && (
-                    <Typography color="text.secondary">{order.profile.phone}</Typography>
-                  )}
-                </>
-              ) : (
-                <Typography color="text.secondary">Guest checkout</Typography>
-              )}
-            </CardContent>
-          </Card>
-
-          <OrderStatusUpdate orderId={order.id} currentStatus={order.status} />
-        </Grid>
-      </Grid>
-    </Box>
+function PaymentBadge({ status }: { status: string }) {
+  return (
+    <span className={`px-2 py-1 text-xs rounded capitalize ${
+      status === 'paid' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+    }`}>
+      {status}
+    </span>
   );
 }

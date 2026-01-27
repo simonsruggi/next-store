@@ -1,308 +1,90 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Chip,
-} from '@mui/material';
 import { formatPrice } from '@/lib/utils';
-import { isDemoMode, mockProducts, mockCategories, getMockFeaturedProducts } from '@/lib/mock-data';
-import AddToCartButton from '@/components/storefront/AddToCartButton';
-import type { Product, Category } from '@/types';
+import { useDemoProductsStore } from '@/lib/store/demo-products';
+import AddToCartMinimal from '@/components/storefront/AddToCartMinimal';
 
-async function getFeaturedProducts(): Promise<Product[]> {
-  if (isDemoMode()) {
-    return getMockFeaturedProducts();
+export default function HomePage() {
+  const [mounted, setMounted] = useState(false);
+  const products = useDemoProductsStore((state) => state.products);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activeProducts = products.filter(p => p.is_active);
+
+  if (!mounted) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="aspect-square bg-gray-200 rounded-lg mb-3" />
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+              <div className="h-4 bg-gray-200 rounded w-1/4" />
+            </div>
+          ))}
+        </div>
+      </main>
+    );
   }
-
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('products')
-    .select(`
-      *,
-      images:product_images(*)
-    `)
-    .eq('is_active', true)
-    .eq('is_featured', true)
-    .order('created_at', { ascending: false })
-    .limit(8);
-
-  return data || [];
-}
-
-async function getCategories(): Promise<Category[]> {
-  if (isDemoMode()) {
-    return mockCategories;
-  }
-
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('is_active', true)
-    .order('name');
-
-  return data || [];
-}
-
-export default async function HomePage() {
-  const [featuredProducts, categories] = await Promise.all([
-    getFeaturedProducts(),
-    getCategories(),
-  ]);
 
   return (
-    <Box>
-      {/* Hero Section */}
-      <Box
-        sx={{
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          py: { xs: 8, md: 12 },
-          mb: 6,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography
-                variant="h2"
-                component="h1"
-                gutterBottom
-                sx={{ fontWeight: 700 }}
-              >
-                Benvenuto su Next Store
-              </Typography>
-              <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
-                Scopri i nostri prodotti di qualità. Spedizione gratuita per
-                ordini superiori a 50€.
-              </Typography>
-              <Link href="/products">
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  size="large"
-                >
-                  Scopri i Prodotti
-                </Button>
-              </Link>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  '& img': {
-                    maxWidth: '100%',
-                    height: 'auto',
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 400,
-                    height: 300,
-                    bgcolor: 'rgba(255,255,255,0.1)',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Typography variant="h1">🛒</Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
+    <main className="max-w-6xl mx-auto px-4 py-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {activeProducts.map((product) => (
+          <article key={product.id} className="group">
+            <Link href={`/product/${product.slug}`} className="block">
+              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3">
+                {product.images?.[0] ? (
+                  <img
+                    src={product.images[0].url}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </Link>
 
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <Container maxWidth="lg" sx={{ mb: 8 }}>
-          <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4 }}>
-            Categorie
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            {categories.map((category) => (
-              <Link key={category.id} href={`/products?category=${category.slug}`}>
-                <Chip
-                  label={category.name}
-                  clickable
-                  sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
-                />
-              </Link>
-            ))}
-          </Box>
-        </Container>
-      )}
-
-      {/* Featured Products Section */}
-      <Container maxWidth="lg" sx={{ mb: 8 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 4,
-          }}
-        >
-          <Typography variant="h4" component="h2">
-            Prodotti in Evidenza
-          </Typography>
-          <Link href="/products">
-            <Button color="primary">
-              Vedi tutti
-            </Button>
-          </Link>
-        </Box>
-
-        <Grid container spacing={3}>
-          {featuredProducts.map((product) => (
-            <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': {
-                    boxShadow: 4,
-                  },
-                }}
-              >
-                <Link href={`/product/${product.slug}`} style={{ textDecoration: 'none' }}>
-                  <CardMedia
-                    sx={{
-                      height: 200,
-                      bgcolor: 'grey.100',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {product.images && product.images[0] ? (
-                      <Box
-                        component="img"
-                        src={product.images[0].url}
-                        alt={product.name}
-                        sx={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <Typography variant="h2" color="text.secondary">
-                        📦
-                      </Typography>
-                    )}
-                  </CardMedia>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <Link href={`/product/${product.slug}`}>
+                  <h2 className="text-sm font-medium text-gray-900 truncate hover:text-gray-600">
+                    {product.name}
+                  </h2>
                 </Link>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Link
-                    href={`/product/${product.slug}`}
-                    style={{ textDecoration: 'none', color: 'inherit' }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        '&:hover': { color: 'primary.main' },
-                      }}
-                    >
-                      {product.name}
-                    </Typography>
-                  </Link>
-                  <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      variant="h6"
-                      color="primary"
-                      sx={{ fontWeight: 700 }}
-                    >
-                      {formatPrice(product.price)}
-                    </Typography>
-                    {product.compare_at_price && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ textDecoration: 'line-through' }}
-                      >
-                        {formatPrice(product.compare_at_price)}
-                      </Typography>
-                    )}
-                  </Box>
-                  {product.type === 'digital' && (
-                    <Chip
-                      label="Digitale"
-                      size="small"
-                      color="info"
-                      sx={{ mt: 1 }}
-                    />
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm font-semibold text-gray-900">
+                    {formatPrice(product.price)}
+                  </span>
+                  {product.compare_at_price && (
+                    <span className="text-xs text-gray-400 line-through">
+                      {formatPrice(product.compare_at_price)}
+                    </span>
                   )}
-                </CardContent>
-                <CardActions sx={{ p: 2, pt: 0 }}>
-                  <AddToCartButton product={product} />
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+                </div>
+              </div>
 
-      {/* Features Section */}
-      <Box sx={{ bgcolor: 'grey.50', py: 8 }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h2" sx={{ mb: 2 }}>
-                  🚚
-                </Typography>
-                <Typography variant="h6" gutterBottom>
-                  Spedizione Gratuita
-                </Typography>
-                <Typography color="text.secondary">
-                  Per ordini superiori a 50€
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h2" sx={{ mb: 2 }}>
-                  🔒
-                </Typography>
-                <Typography variant="h6" gutterBottom>
-                  Pagamenti Sicuri
-                </Typography>
-                <Typography color="text.secondary">
-                  Stripe, PayPal e Contrassegno
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h2" sx={{ mb: 2 }}>
-                  📞
-                </Typography>
-                <Typography variant="h6" gutterBottom>
-                  Assistenza Dedicata
-                </Typography>
-                <Typography color="text.secondary">
-                  Supporto clienti disponibile
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-    </Box>
+              <AddToCartMinimal product={product} />
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {activeProducts.length === 0 && (
+        <p className="text-center text-gray-500 py-20">
+          No products available
+        </p>
+      )}
+    </main>
   );
 }

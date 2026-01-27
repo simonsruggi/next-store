@@ -3,9 +3,9 @@ import type { Product, Category, ShippingMethod } from '@/types';
 export const mockCategories: Category[] = [
   {
     id: 'cat-1',
-    name: 'Elettronica',
-    slug: 'elettronica',
-    description: 'Dispositivi elettronici e accessori',
+    name: 'Electronics',
+    slug: 'electronics',
+    description: 'Electronic devices and accessories',
     parent_id: null,
     image_url: null,
     is_active: true,
@@ -13,9 +13,9 @@ export const mockCategories: Category[] = [
   },
   {
     id: 'cat-2',
-    name: 'Abbigliamento',
-    slug: 'abbigliamento',
-    description: 'Moda uomo e donna',
+    name: 'Clothing',
+    slug: 'clothing',
+    description: 'Fashion for men and women',
     parent_id: null,
     image_url: null,
     is_active: true,
@@ -23,9 +23,9 @@ export const mockCategories: Category[] = [
   },
   {
     id: 'cat-3',
-    name: 'Casa e Giardino',
-    slug: 'casa-giardino',
-    description: 'Articoli per la casa',
+    name: 'Home & Garden',
+    slug: 'home-garden',
+    description: 'Home and garden items',
     parent_id: null,
     image_url: null,
     is_active: true,
@@ -33,9 +33,9 @@ export const mockCategories: Category[] = [
   },
   {
     id: 'cat-4',
-    name: 'Libri Digitali',
-    slug: 'libri-digitali',
-    description: 'eBook e contenuti digitali',
+    name: 'Digital',
+    slug: 'digital',
+    description: 'eBooks and digital content',
     parent_id: null,
     image_url: null,
     is_active: true,
@@ -48,7 +48,7 @@ export const mockProducts: Product[] = [
     id: 'prod-1',
     name: 'Smartphone Pro Max',
     slug: 'smartphone-pro-max',
-    description: "L'ultimo modello di smartphone con fotocamera avanzata, processore velocissimo e batteria a lunga durata. Display AMOLED da 6.7 pollici con refresh rate 120Hz. Resistente all'acqua IP68.",
+    description: 'Latest smartphone with advanced camera, fast processor and long battery life. 6.7 inch AMOLED display with 120Hz refresh rate. IP68 water resistant.',
     price: 899.99,
     compare_at_price: 999.99,
     type: 'physical',
@@ -67,9 +67,9 @@ export const mockProducts: Product[] = [
   },
   {
     id: 'prod-2',
-    name: 'Laptop Ultraleggero',
-    slug: 'laptop-ultraleggero',
-    description: 'Notebook professionale con schermo 14" 4K, 16GB RAM, SSD da 512GB. Perfetto per lavoro e studio. Batteria fino a 12 ore.',
+    name: 'Ultralight Laptop',
+    slug: 'ultralight-laptop',
+    description: 'Professional notebook with 14" 4K screen, 16GB RAM, 512GB SSD. Perfect for work and study. Up to 12 hours battery life.',
     price: 1299.00,
     compare_at_price: null,
     type: 'physical',
@@ -83,14 +83,14 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[0],
     images: [
-      { id: 'img-2', product_id: 'prod-2', url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600', alt_text: 'Laptop Ultraleggero', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-2', product_id: 'prod-2', url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600', alt_text: 'Ultralight Laptop', position: 0, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-3',
-    name: 'Cuffie Wireless Premium',
-    slug: 'cuffie-wireless-premium',
-    description: 'Cuffie over-ear con cancellazione attiva del rumore, audio Hi-Fi, 30 ore di autonomia. Comfort superiore per sessioni prolungate.',
+    name: 'Wireless Headphones Premium',
+    slug: 'wireless-headphones-premium',
+    description: 'Over-ear headphones with active noise cancellation, Hi-Fi audio, 30 hours battery. Superior comfort for extended sessions.',
     price: 249.99,
     compare_at_price: 299.99,
     type: 'physical',
@@ -104,14 +104,14 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[0],
     images: [
-      { id: 'img-3', product_id: 'prod-3', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600', alt_text: 'Cuffie Wireless Premium', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-3', product_id: 'prod-3', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600', alt_text: 'Wireless Headphones Premium', position: 0, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-4',
-    name: 'T-Shirt Basic',
-    slug: 't-shirt-basic',
-    description: 'T-shirt in cotone 100% organico, disponibile in vari colori. Vestibilità regolare, perfetta per ogni occasione.',
+    name: 'Basic T-Shirt',
+    slug: 'basic-t-shirt',
+    description: '100% organic cotton t-shirt, available in various colors. Regular fit, perfect for any occasion.',
     price: 29.99,
     compare_at_price: null,
     type: 'physical',
@@ -125,19 +125,19 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[1],
     images: [
-      { id: 'img-4', product_id: 'prod-4', url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', alt_text: 'T-Shirt Basic', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-4', product_id: 'prod-4', url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', alt_text: 'Basic T-Shirt', position: 0, created_at: new Date().toISOString() },
     ],
     variants: [
-      { id: 'var-1', product_id: 'prod-4', name: 'Bianco - S', sku: 'TSHIRT-WH-S', price: null, stock_quantity: 30, attributes: { colore: 'Bianco', taglia: 'S' }, is_active: true, created_at: new Date().toISOString() },
-      { id: 'var-2', product_id: 'prod-4', name: 'Bianco - M', sku: 'TSHIRT-WH-M', price: null, stock_quantity: 40, attributes: { colore: 'Bianco', taglia: 'M' }, is_active: true, created_at: new Date().toISOString() },
-      { id: 'var-3', product_id: 'prod-4', name: 'Nero - M', sku: 'TSHIRT-BK-M', price: null, stock_quantity: 45, attributes: { colore: 'Nero', taglia: 'M' }, is_active: true, created_at: new Date().toISOString() },
+      { id: 'var-1', product_id: 'prod-4', name: 'White - S', sku: 'TSHIRT-WH-S', price: null, stock_quantity: 30, attributes: { color: 'White', size: 'S' }, is_active: true, created_at: new Date().toISOString() },
+      { id: 'var-2', product_id: 'prod-4', name: 'White - M', sku: 'TSHIRT-WH-M', price: null, stock_quantity: 40, attributes: { color: 'White', size: 'M' }, is_active: true, created_at: new Date().toISOString() },
+      { id: 'var-3', product_id: 'prod-4', name: 'Black - M', sku: 'TSHIRT-BK-M', price: null, stock_quantity: 45, attributes: { color: 'Black', size: 'M' }, is_active: true, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-5',
-    name: 'Jeans Slim Fit',
-    slug: 'jeans-slim-fit',
-    description: 'Jeans in denim di alta qualità, taglio slim fit moderno. Lavaggio medio, perfetto per un look casual ma curato.',
+    name: 'Slim Fit Jeans',
+    slug: 'slim-fit-jeans',
+    description: 'High quality denim jeans, modern slim fit cut. Medium wash, perfect for a casual yet polished look.',
     price: 79.99,
     compare_at_price: 99.99,
     type: 'physical',
@@ -151,19 +151,19 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[1],
     images: [
-      { id: 'img-5', product_id: 'prod-5', url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600', alt_text: 'Jeans Slim Fit', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-5', product_id: 'prod-5', url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600', alt_text: 'Slim Fit Jeans', position: 0, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-6',
-    name: 'Felpa con Cappuccio',
-    slug: 'felpa-cappuccio',
-    description: 'Felpa confortevole in cotone felpato, perfetta per le giornate fresche. Design moderno con cappuccio regolabile.',
+    name: 'Hoodie',
+    slug: 'hoodie',
+    description: 'Comfortable fleece cotton hoodie, perfect for cool days. Modern design with adjustable hood.',
     price: 59.99,
     compare_at_price: null,
     type: 'physical',
     category_id: 'cat-2',
-    sku: 'FELPA-001',
+    sku: 'HOODIE-001',
     stock_quantity: 120,
     is_active: true,
     is_featured: false,
@@ -172,19 +172,19 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[1],
     images: [
-      { id: 'img-6', product_id: 'prod-6', url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600', alt_text: 'Felpa con Cappuccio', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-6', product_id: 'prod-6', url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600', alt_text: 'Hoodie', position: 0, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-7',
-    name: 'Set Pentole Antiaderenti',
-    slug: 'set-pentole-antiaderenti',
-    description: 'Set completo di 8 pentole e padelle con rivestimento antiaderente professionale. Adatto a tutti i piani cottura.',
+    name: 'Non-Stick Cookware Set',
+    slug: 'non-stick-cookware-set',
+    description: 'Complete set of 8 pots and pans with professional non-stick coating. Suitable for all cooktops.',
     price: 149.99,
     compare_at_price: 199.99,
     type: 'physical',
     category_id: 'cat-3',
-    sku: 'CUCINA-001',
+    sku: 'KITCHEN-001',
     stock_quantity: 40,
     is_active: true,
     is_featured: true,
@@ -193,14 +193,14 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[2],
     images: [
-      { id: 'img-7', product_id: 'prod-7', url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600', alt_text: 'Set Pentole Antiaderenti', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-7', product_id: 'prod-7', url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600', alt_text: 'Non-Stick Cookware Set', position: 0, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-8',
-    name: 'Lampada LED Smart',
-    slug: 'lampada-led-smart',
-    description: 'Lampada da tavolo intelligente, controllo via app, 16 milioni di colori. Compatibile con Alexa e Google Home.',
+    name: 'Smart LED Lamp',
+    slug: 'smart-led-lamp',
+    description: 'Smart desk lamp, app controlled, 16 million colors. Compatible with Alexa and Google Home.',
     price: 49.99,
     compare_at_price: null,
     type: 'physical',
@@ -214,14 +214,14 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[2],
     images: [
-      { id: 'img-8', product_id: 'prod-8', url: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600', alt_text: 'Lampada LED Smart', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-8', product_id: 'prod-8', url: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600', alt_text: 'Smart LED Lamp', position: 0, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-9',
-    name: 'eBook: Guida al Marketing Digitale',
-    slug: 'ebook-marketing-digitale',
-    description: 'Manuale completo sul marketing digitale: SEO, social media, advertising e analytics. 300+ pagine di contenuti pratici.',
+    name: 'eBook: Digital Marketing Guide',
+    slug: 'ebook-digital-marketing',
+    description: 'Complete digital marketing handbook: SEO, social media, advertising and analytics. 300+ pages of practical content.',
     price: 19.99,
     compare_at_price: 29.99,
     type: 'digital',
@@ -235,14 +235,14 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[3],
     images: [
-      { id: 'img-9', product_id: 'prod-9', url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600', alt_text: 'eBook Marketing Digitale', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-9', product_id: 'prod-9', url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600', alt_text: 'eBook Digital Marketing', position: 0, created_at: new Date().toISOString() },
     ],
   },
   {
     id: 'prod-10',
-    name: 'Corso Video: Programmazione Web',
-    slug: 'corso-programmazione-web',
-    description: 'Corso completo di programmazione web: HTML, CSS, JavaScript, React. 50+ ore di video con progetti pratici.',
+    name: 'Video Course: Web Development',
+    slug: 'course-web-development',
+    description: 'Complete web development course: HTML, CSS, JavaScript, React. 50+ hours of video with practical projects.',
     price: 99.99,
     compare_at_price: 149.99,
     type: 'digital',
@@ -256,7 +256,7 @@ export const mockProducts: Product[] = [
     updated_at: new Date().toISOString(),
     category: mockCategories[3],
     images: [
-      { id: 'img-10', product_id: 'prod-10', url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600', alt_text: 'Corso Programmazione Web', position: 0, created_at: new Date().toISOString() },
+      { id: 'img-10', product_id: 'prod-10', url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600', alt_text: 'Web Development Course', position: 0, created_at: new Date().toISOString() },
     ],
   },
 ];
@@ -264,8 +264,8 @@ export const mockProducts: Product[] = [
 export const mockShippingMethods: ShippingMethod[] = [
   {
     id: 'ship-1',
-    name: 'Spedizione Standard',
-    description: 'Consegna in 5-7 giorni lavorativi',
+    name: 'Standard Shipping',
+    description: 'Delivery in 5-7 business days',
     price: 5.99,
     estimated_days_min: 5,
     estimated_days_max: 7,
@@ -274,8 +274,8 @@ export const mockShippingMethods: ShippingMethod[] = [
   },
   {
     id: 'ship-2',
-    name: 'Spedizione Express',
-    description: 'Consegna in 2-3 giorni lavorativi',
+    name: 'Express Shipping',
+    description: 'Delivery in 2-3 business days',
     price: 12.99,
     estimated_days_min: 2,
     estimated_days_max: 3,
@@ -284,8 +284,8 @@ export const mockShippingMethods: ShippingMethod[] = [
   },
   {
     id: 'ship-3',
-    name: 'Consegna il Giorno Dopo',
-    description: 'Consegna entro il giorno lavorativo successivo',
+    name: 'Next Day Delivery',
+    description: 'Delivery by next business day',
     price: 19.99,
     estimated_days_min: 1,
     estimated_days_max: 1,
@@ -296,13 +296,9 @@ export const mockShippingMethods: ShippingMethod[] = [
 
 // Helper to check if we're in demo mode (no Supabase configured)
 export function isDemoMode(): boolean {
-  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '')
-    .trim()
-    .replace(/\\n/g, '')  // Handle literal \n
-    .replace(/\n/g, '');   // Handle actual newlines
-  return !url ||
-         url === 'https://placeholder.supabase.co' ||
-         url.includes('placeholder');
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  const isValidSupabaseUrl = url.startsWith('https://') && url.includes('.supabase.co');
+  return !isValidSupabaseUrl;
 }
 
 export function getMockProduct(slug: string): Product | null {

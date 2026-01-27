@@ -6,18 +6,10 @@ function isDemoMode(): boolean {
     .trim()
     .replace(/\\n/g, '')
     .replace(/\n/g, '');
-  const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
-    .trim()
-    .replace(/\\n/g, '')
-    .replace(/\n/g, '');
 
-  const urlLooksPlaceholder =
-    !url || url === 'https://placeholder.supabase.co' || url.includes('placeholder');
-  const anonKeyLooksPlaceholder =
-    !anonKey || anonKey === 'anon_placeholder' || anonKey.includes('placeholder');
-
-  // Treat any missing/placeholder config as demo mode to avoid crashing middleware at build/runtime.
-  return urlLooksPlaceholder || anonKeyLooksPlaceholder;
+  // Demo mode if URL is missing, placeholder, or not a valid supabase URL
+  const isValidSupabaseUrl = url.startsWith('https://') && url.includes('.supabase.co');
+  return !isValidSupabaseUrl;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -25,20 +17,8 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  // In demo mode, skip all auth checks
+  // In demo mode, skip all auth checks and allow everything
   if (isDemoMode()) {
-    // Block admin routes in demo mode
-    if (request.nextUrl.pathname.startsWith('/admin')) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/';
-      return NextResponse.redirect(url);
-    }
-    // Block account routes in demo mode
-    if (request.nextUrl.pathname.startsWith('/account')) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
-    }
     return supabaseResponse;
   }
 

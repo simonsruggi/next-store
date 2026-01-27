@@ -1,197 +1,149 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Container,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Box,
-  Divider,
-} from '@mui/material';
-import { CheckCircle as SuccessIcon } from '@mui/icons-material';
-import { createClient } from '@/lib/supabase/server';
-import { formatPrice, formatOrderNumber } from '@/lib/utils';
+import { useDemoOrdersStore, DemoOrder } from '@/lib/store/demo-orders';
+import { formatPrice } from '@/lib/utils';
 
-interface SuccessPageProps {
-  searchParams: Promise<{ orderId?: string }>;
-}
+export default function CheckoutSuccessPage() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('order');
+  const [order, setOrder] = useState<DemoOrder | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const getOrder = useDemoOrdersStore((state) => state.getOrder);
 
-export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
-  const { orderId } = await searchParams;
+  useEffect(() => {
+    setMounted(true);
+    if (orderId) {
+      const foundOrder = getOrder(orderId);
+      setOrder(foundOrder || null);
+    }
+  }, [orderId, getOrder]);
 
-  if (!orderId) {
+  if (!mounted) {
     return (
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Card>
-          <CardContent sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Ordine non trovato
-            </Typography>
-            <Button component={Link} href="/" variant="contained">
-              Torna alla Home
-            </Button>
-          </CardContent>
-        </Card>
-      </Container>
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <p className="text-gray-500">Loading...</p>
+      </main>
     );
   }
 
-  const supabase = await createClient();
-  const { data: order } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      items:order_items(*),
-      shipping_address:addresses!orders_shipping_address_id_fkey(*)
-    `)
-    .eq('id', orderId)
-    .single();
-
   if (!order) {
     return (
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Card>
-          <CardContent sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Ordine non trovato
-            </Typography>
-            <Button component={Link} href="/" variant="contained">
-              Torna alla Home
-            </Button>
-          </CardContent>
-        </Card>
-      </Container>
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <p className="text-gray-500 mb-4">Order not found</p>
+          <Link href="/" className="text-blue-600 hover:underline">
+            Back to store
+          </Link>
+        </div>
+      </main>
     );
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 8 }}>
-      <Card>
-        <CardContent sx={{ py: 4 }}>
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <SuccessIcon
-              sx={{ fontSize: 80, color: 'success.main', mb: 2 }}
-            />
-            <Typography variant="h4" gutterBottom>
-              Grazie per il tuo ordine!
-            </Typography>
-            <Typography color="text.secondary">
-              Il tuo ordine {formatOrderNumber(order.order_number)} è stato ricevuto.
-            </Typography>
-          </Box>
+    <main className="max-w-2xl mx-auto px-4 py-8">
+      {/* Success Header */}
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Order Confirmed!</h1>
+        <p className="text-gray-500">
+          Thank you for your order. We've sent a confirmation to {order.customer_email}
+        </p>
+      </div>
 
-          <Divider sx={{ my: 3 }} />
+      {/* Order Details */}
+      <div className="bg-gray-50 rounded-lg p-6 mb-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <p className="text-sm text-gray-500">Order number</p>
+            <p className="font-semibold text-gray-900">{order.order_number}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Date</p>
+            <p className="text-gray-900">
+              {new Date(order.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </p>
+          </div>
+        </div>
 
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Numero Ordine
-            </Typography>
-            <Typography variant="h6">
-              {formatOrderNumber(order.order_number)}
-            </Typography>
-          </Box>
+        <div className="border-t border-gray-200 pt-4 mb-4">
+          <p className="text-sm text-gray-500 mb-2">Shipping to</p>
+          <p className="text-gray-900">{order.customer_name}</p>
+          <p className="text-gray-600">{order.shipping_address}</p>
+        </div>
 
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Stato Ordine
-            </Typography>
-            <Typography>
-              {order.payment_method === 'cod'
-                ? 'In attesa di pagamento alla consegna'
-                : order.payment_status === 'paid'
-                ? 'Pagamento confermato'
-                : 'In elaborazione'}
-            </Typography>
-          </Box>
+        <div className="border-t border-gray-200 pt-4">
+          <p className="text-sm text-gray-500 mb-2">Payment</p>
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 text-xs rounded ${
+              order.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {order.payment_status === 'paid' ? 'Paid' : 'Pending'}
+            </span>
+            <span className="text-sm text-gray-600 capitalize">{order.payment_method}</span>
+          </div>
+        </div>
+      </div>
 
-          {order.shipping_address && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Indirizzo di Spedizione
-              </Typography>
-              <Typography>
-                {order.shipping_address.full_name}
-                <br />
-                {order.shipping_address.address_line1}
-                {order.shipping_address.address_line2 && (
-                  <>
-                    <br />
-                    {order.shipping_address.address_line2}
-                  </>
-                )}
-                <br />
-                {order.shipping_address.postal_code} {order.shipping_address.city}
-                <br />
-                {order.shipping_address.country}
-              </Typography>
-            </Box>
-          )}
+      {/* Order Items */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="font-medium text-gray-900">Order Items</h2>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {order.items.map((item, index) => (
+            <div key={index} className="p-4 flex justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+              </div>
+              <p className="text-sm font-medium text-gray-900">
+                {formatPrice(item.price * item.quantity)}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="p-4 bg-gray-50 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500">Subtotal</span>
+            <span>{formatPrice(order.subtotal)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500">Shipping</span>
+            <span>{order.shipping === 0 ? 'Free' : formatPrice(order.shipping)}</span>
+          </div>
+          <div className="flex justify-between font-semibold text-lg pt-2 border-t border-gray-200">
+            <span>Total</span>
+            <span>{formatPrice(order.total)}</span>
+          </div>
+        </div>
+      </div>
 
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Riepilogo
-            </Typography>
-            {order.items.map((item: any) => (
-              <Box
-                key={item.id}
-                sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}
-              >
-                <Typography>
-                  {item.product_name}
-                  {item.variant_name && ` - ${item.variant_name}`}
-                  {' x '}{item.quantity}
-                </Typography>
-                <Typography>{formatPrice(item.total_price)}</Typography>
-              </Box>
-            ))}
-
-            <Divider sx={{ my: 1 }} />
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-              <Typography>Subtotale</Typography>
-              <Typography>{formatPrice(order.subtotal)}</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-              <Typography>Spedizione</Typography>
-              <Typography>
-                {order.shipping_cost === 0 ? 'Gratuita' : formatPrice(order.shipping_cost)}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-              <Typography>IVA</Typography>
-              <Typography>{formatPrice(order.tax)}</Typography>
-            </Box>
-
-            <Divider sx={{ my: 1 }} />
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-              <Typography variant="h6">Totale</Typography>
-              <Typography variant="h6" color="primary">
-                {formatPrice(order.total)}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-            <Button
-              component={Link}
-              href="/account/orders"
-              variant="outlined"
-              fullWidth
-            >
-              I miei ordini
-            </Button>
-            <Button
-              component={Link}
-              href="/products"
-              variant="contained"
-              fullWidth
-            >
-              Continua lo shopping
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Container>
+      {/* Actions */}
+      <div className="flex gap-4">
+        <Link
+          href="/"
+          className="flex-1 py-3 text-center bg-black text-white rounded-lg font-medium text-sm hover:bg-gray-800"
+        >
+          Continue Shopping
+        </Link>
+        <Link
+          href="/admin/orders"
+          className="flex-1 py-3 text-center border border-gray-200 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-50"
+        >
+          View in Admin
+        </Link>
+      </div>
+    </main>
   );
 }
