@@ -1,6 +1,30 @@
 import Stripe from 'stripe';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function isDemoMode(): boolean {
+  return !process.env.STRIPE_SECRET_KEY ||
+         process.env.STRIPE_SECRET_KEY === 'sk_test_placeholder' ||
+         process.env.STRIPE_SECRET_KEY.includes('placeholder');
+}
+
+// Lazy initialization to avoid errors at build time
+let _stripe: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    if (isDemoMode()) {
+      throw new Error('Stripe is not configured in demo mode');
+    }
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  }
+  return _stripe;
+}
+
+// For backward compatibility - will throw in demo mode if accessed
+export const stripe = new Proxy({} as Stripe, {
+  get(_, prop) {
+    return getStripe()[prop as keyof Stripe];
+  }
+});
 
 export async function createCheckoutSession(
   orderId: string,
