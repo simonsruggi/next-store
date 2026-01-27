@@ -1,127 +1,108 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Button,
-  Box,
-} from '@mui/material';
-import { createClient } from '@/lib/supabase/server';
-import { formatPrice, formatDate, formatOrderNumber } from '@/lib/utils';
-import type { Order } from '@/types';
+import { useDemoOrdersStore } from '@/lib/store/demo-orders';
+import { formatPrice } from '@/lib/utils';
 
-const statusColors: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error'> = {
-  pending: 'warning',
-  processing: 'info',
-  shipped: 'info',
-  delivered: 'success',
-  cancelled: 'error',
-  refunded: 'error',
-};
+export default function AccountOrdersPage() {
+  const [mounted, setMounted] = useState(false);
+  const orders = useDemoOrdersStore((state) => state.orders);
 
-const statusLabels: Record<string, string> = {
-  pending: 'In attesa',
-  processing: 'In elaborazione',
-  shipped: 'Spedito',
-  delivered: 'Consegnato',
-  cancelled: 'Annullato',
-  refunded: 'Rimborsato',
-};
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-export default async function AccountOrdersPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/login?redirect=/account/orders');
+  if (!mounted) {
+    return (
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
   }
 
-  const { data: orders } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      items:order_items(count)
-    `)
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+  return (
+    <main className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Link href="/account" className="text-sm text-gray-500 hover:text-gray-700">
+          &larr; Back to Account
+        </Link>
+        <h1 className="text-2xl font-semibold text-gray-900 mt-2">My Orders</h1>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+              <th className="px-4 py-3 font-medium">Order</th>
+              <th className="px-4 py-3 font-medium">Date</th>
+              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium text-right">Items</th>
+              <th className="px-4 py-3 font-medium text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-12 text-center">
+                  <p className="text-gray-500 mb-4">You haven't placed any orders yet</p>
+                  <Link
+                    href="/products"
+                    className="inline-block px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800"
+                  >
+                    Browse Products
+                  </Link>
+                </td>
+              </tr>
+            ) : (
+              orders.map((order) => (
+                <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/checkout/success?order=${order.id}`}
+                      className="text-sm font-medium text-blue-600 hover:underline"
+                    >
+                      {order.order_number}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {new Date(order.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={order.status} />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600 text-right">
+                    {order.items.reduce((sum, item) => sum + item.quantity, 0)}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-right">
+                    {formatPrice(order.total)}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: 'bg-amber-50 text-amber-700',
+    processing: 'bg-blue-50 text-blue-700',
+    shipped: 'bg-indigo-50 text-indigo-700',
+    delivered: 'bg-green-50 text-green-700',
+    cancelled: 'bg-red-50 text-red-700',
+  };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button component={Link} href="/account" variant="text">
-          ← Account
-        </Button>
-        <Typography variant="h4" component="h1">
-          I miei ordini
-        </Typography>
-      </Box>
-
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Ordine</TableCell>
-                  <TableCell>Data</TableCell>
-                  <TableCell>Stato</TableCell>
-                  <TableCell align="right">Articoli</TableCell>
-                  <TableCell align="right">Totale</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {!orders || orders.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                      <Typography color="text.secondary" sx={{ mb: 2 }}>
-                        Non hai ancora effettuato ordini
-                      </Typography>
-                      <Button component={Link} href="/products" variant="contained">
-                        Scopri i prodotti
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  orders.map((order: Order & { items?: { count: number }[] }) => (
-                    <TableRow key={order.id} hover>
-                      <TableCell>
-                        <Link href={`/account/orders/${order.id}`}>
-                          <Typography variant="body2" fontWeight={600}>
-                            {formatOrderNumber(order.order_number)}
-                          </Typography>
-                        </Link>
-                      </TableCell>
-                      <TableCell>{formatDate(order.created_at)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={statusLabels[order.status] || order.status}
-                          size="small"
-                          color={statusColors[order.status] || 'default'}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        {order.items?.[0]?.count || 0}
-                      </TableCell>
-                      <TableCell align="right">
-                        {formatPrice(order.total)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    </Container>
+    <span className={`px-2 py-1 text-xs rounded capitalize ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
+      {status}
+    </span>
   );
 }
