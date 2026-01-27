@@ -2,10 +2,22 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 function isDemoMode(): boolean {
-  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\\n/g, '').replace(/\n/g, '');
-  return !url ||
-         url === 'https://placeholder.supabase.co' ||
-         url.includes('placeholder');
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '')
+    .trim()
+    .replace(/\\n/g, '')
+    .replace(/\n/g, '');
+  const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
+    .trim()
+    .replace(/\\n/g, '')
+    .replace(/\n/g, '');
+
+  const urlLooksPlaceholder =
+    !url || url === 'https://placeholder.supabase.co' || url.includes('placeholder');
+  const anonKeyLooksPlaceholder =
+    !anonKey || anonKey === 'anon_placeholder' || anonKey.includes('placeholder');
+
+  // Treat any missing/placeholder config as demo mode to avoid crashing middleware at build/runtime.
+  return urlLooksPlaceholder || anonKeyLooksPlaceholder;
 }
 
 export async function updateSession(request: NextRequest) {

@@ -2,10 +2,22 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 function isDemoMode(): boolean {
-  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\\n/g, '').replace(/\n/g, '');
-  return !url ||
-         url === 'https://placeholder.supabase.co' ||
-         url.includes('placeholder');
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '')
+    .trim()
+    .replace(/\\n/g, '')
+    .replace(/\n/g, '');
+  const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
+    .trim()
+    .replace(/\\n/g, '')
+    .replace(/\n/g, '');
+
+  const urlLooksPlaceholder =
+    !url || url === 'https://placeholder.supabase.co' || url.includes('placeholder');
+  const anonKeyLooksPlaceholder =
+    !anonKey || anonKey === 'anon_placeholder' || anonKey.includes('placeholder');
+
+  // Treat any missing/placeholder config as demo mode so SSG/SSR never crashes on misconfigured envs.
+  return urlLooksPlaceholder || anonKeyLooksPlaceholder;
 }
 
 // Create a chainable mock query builder
@@ -76,8 +88,21 @@ export async function createClient() {
 }
 
 export async function createServiceClient() {
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '')
+    .trim()
+    .replace(/\\n/g, '')
+    .replace(/\n/g, '');
+  const serviceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '')
+    .trim()
+    .replace(/\\n/g, '')
+    .replace(/\n/g, '');
+  const urlLooksPlaceholder =
+    !url || url === 'https://placeholder.supabase.co' || url.includes('placeholder');
+  const serviceKeyLooksPlaceholder =
+    !serviceRoleKey || serviceRoleKey === 'service_role_placeholder' || serviceRoleKey.includes('placeholder');
+
   // In demo mode, return a mock client
-  if (isDemoMode()) {
+  if (urlLooksPlaceholder || serviceKeyLooksPlaceholder) {
     return {
       from: () => createMockQueryBuilder(),
     } as any;

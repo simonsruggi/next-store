@@ -56,11 +56,9 @@ npm install
 
 ### 4. Set up environment variables
 
-Copy `.env.example` to `.env.local` and fill in your values:
+Create a `.env.local` file and add the required environment variables.
 
-```bash
-cp .env.example .env.local
-```
+See `docs/environment-variables.md` for the complete list.
 
 ### 5. Create an admin user
 
