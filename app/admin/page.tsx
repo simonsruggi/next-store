@@ -129,9 +129,11 @@ export default async function AdminDashboard() {
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6">Ordini Recenti</Typography>
-            <Button component={Link} href="/admin/orders" size="small">
-              Vedi tutti
-            </Button>
+            <Link href="/admin/orders">
+              <Button size="small">
+                Vedi tutti
+              </Button>
+            </Link>
           </Box>
 
           <TableContainer>
