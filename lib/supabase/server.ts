@@ -2,9 +2,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 function isDemoMode(): boolean {
-  return !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-         process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co' ||
-         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  return !url ||
+         url === 'https://placeholder.supabase.co' ||
+         url.includes('placeholder');
 }
 
 // Create a chainable mock query builder

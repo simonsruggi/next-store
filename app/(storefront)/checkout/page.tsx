@@ -29,9 +29,10 @@ import { mockShippingMethods } from '@/lib/mock-data';
 import type { ShippingMethod, CheckoutFormData, AddressFormData } from '@/types';
 
 function isDemoMode(): boolean {
-  return !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-         process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co' ||
-         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  return !url ||
+         url === 'https://placeholder.supabase.co' ||
+         url.includes('placeholder');
 }
 
 const steps = ['Spedizione', 'Pagamento', 'Conferma'];

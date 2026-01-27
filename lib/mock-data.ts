@@ -296,9 +296,10 @@ export const mockShippingMethods: ShippingMethod[] = [
 
 // Helper to check if we're in demo mode (no Supabase configured)
 export function isDemoMode(): boolean {
-  return !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-         process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co' ||
-         process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  return !url ||
+         url === 'https://placeholder.supabase.co' ||
+         url.includes('placeholder');
 }
 
 export function getMockProduct(slug: string): Product | null {
