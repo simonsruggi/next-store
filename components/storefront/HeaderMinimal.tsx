@@ -40,7 +40,7 @@ export default function HeaderMinimal() {
             <Link href="/products" className="text-sm text-gray-600 hover:text-gray-900">
               All Products
             </Link>
-            {mounted && categories.slice(0, 4).map((cat) => (
+            {mounted && categories.slice(0, 3).map((cat) => (
               <Link
                 key={cat.id}
                 href={`/products?category=${cat.slug}`}
@@ -49,10 +49,13 @@ export default function HeaderMinimal() {
                 {cat.name}
               </Link>
             ))}
+            <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
+              Dashboard
+            </Link>
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {/* Account link */}
             <Link
               href="/account"
@@ -144,6 +147,13 @@ export default function HeaderMinimal() {
 
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <Link
+                  href="/account"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-medium text-gray-900 rounded-lg hover:bg-gray-50"
+                >
+                  My Account
+                </Link>
+                <Link
                   href="/cart"
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-900 rounded-lg hover:bg-gray-50"
@@ -158,9 +168,9 @@ export default function HeaderMinimal() {
                 <Link
                   href="/dashboard"
                   onClick={() => setMenuOpen(false)}
-                  className="block px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50"
+                  className="block px-3 py-2 text-sm font-medium text-blue-600 rounded-lg hover:bg-blue-50"
                 >
-                  Admin Panel
+                  Dashboard
                 </Link>
               </div>
             </nav>
