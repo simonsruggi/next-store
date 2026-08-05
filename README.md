@@ -89,3 +89,7 @@ Open [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to acces
 ## License
 
 MIT License
+
+---
+
+next-store is free and open source. If you find it useful, please [⭐️ star the repo](https://github.com/simonsruggi/next-store) — and if you'd like to support my open-source work, you can [💛 sponsor me on GitHub](https://github.com/sponsors/simonsruggi) or [☕️ buy me a coffee](https://buymeacoffee.com/simonsruggi). Completely optional, always appreciated. 🙏
